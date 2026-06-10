@@ -1,0 +1,1 @@
+# roof-inspection-desktop-app
