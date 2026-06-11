@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "roof-inspection-desktop-app",
+  "outputfilename": "roof-inspection-desktop-app",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "dylandirosa98",
+    "email": "dylandirosa980@gmail.com"
+  }
+}
