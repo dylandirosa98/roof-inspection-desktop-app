@@ -1,12 +1,12 @@
 <script>
   import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/main/App.js'
+  import {GetProject} from '../wailsjs/go/main/App.js'
 
-  let resultText = "Please enter your name below 👇"
-  let name
+  let resultText = "Please enter a directory below 👇"
+  let directory = ''
 
-  function greet() {
-    Greet(name).then(result => resultText = result)
+  function getProject() {
+    GetProject(directory).then(result => {resultText = JSON.stringify(result, null, 2)})
   }
 </script>
 
@@ -14,8 +14,8 @@
   <img alt="Wails logo" id="logo" src="{logo}">
   <div class="result" id="result">{resultText}</div>
   <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={name} class="input" id="name" type="text"/>
-    <button class="btn" on:click={greet}>Greet</button>
+    <input autocomplete="off" bind:value={directory} class="input" id="name" type="text"/>
+    <button class="btn" on:click={getProject}>Get Project</button>
   </div>
 </main>
 

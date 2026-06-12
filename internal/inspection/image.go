@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
 	"path/filepath"
 )
@@ -16,7 +18,7 @@ type Image struct {
 	Path     string
 }
 
-func getImage(path string) (Image, error) {
+func GetImage(path string) (Image, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("Error opening file: %s\n", err)
@@ -63,7 +65,7 @@ type Project struct {
 	Images    []Image
 }
 
-func getProject(path string) (Project, error) {
+func GetProject(path string) (Project, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		fmt.Printf("Error opening directory: %s\n", err)
@@ -74,11 +76,11 @@ func getProject(path string) (Project, error) {
 		Images:    make([]Image, 0),
 	}
 	for _, entry := range entries {
-		image, err := getImage(filepath.Join(path, entry.Name()))
+		imageStruct, err := GetImage(filepath.Join(path, entry.Name()))
 		if err != nil {
 			continue
 		}
-		project.Images = append(project.Images, image)
+		project.Images = append(project.Images, imageStruct)
 	}
 	return project, nil
 }
