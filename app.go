@@ -27,8 +27,8 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
-func (a *App) GetProject(path string) (inspection.Project, error) {
-	project, err := inspection.GetProject(path)
+func (a *App) CreateProject(path string) (inspection.Project, error) {
+	project, err := inspection.CreateProject(path)
 	if err != nil {
 		fmt.Printf("Failed to get project from %s: %s\n", path, err)
 		return project, err

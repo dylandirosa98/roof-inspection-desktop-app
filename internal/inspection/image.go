@@ -1,22 +1,13 @@
 package inspection
 
 import (
-	"errors"
+	"encoding/base64"
 	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
-	"path/filepath"
 )
-
-type Image struct {
-	Width    int
-	Height   int
-	Format   string
-	FileSize int64
-	Path     string
-}
 
 func GetImage(path string) (Image, error) {
 	file, err := os.Open(path)
@@ -30,17 +21,6 @@ func GetImage(path string) (Image, error) {
 		fmt.Printf("Error decoding file: %s\n", err)
 		return Image{}, err
 	}
-	switch format {
-	case "jpeg":
-		break
-	case "png":
-		break
-	case "jpg":
-		break
-	default:
-		err = errors.New("unsupported image format")
-		return Image{}, err
-	}
 	bounds := img.Bounds()
 	width := bounds.Dx()
 	height := bounds.Dy()
@@ -50,37 +30,23 @@ func GetImage(path string) (Image, error) {
 		return Image{}, err
 	}
 	size := info.Size()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Printf("Error reading file: %s\n", err)
+		return Image{}, err
+	}
+	encoded := base64.StdEncoding.EncodeToString(data)
+	if encoded == "" {
+		fmt.Printf("Error decoding file: %s\n", err)
+	}
+	dataURL := "data:" + mimeType(format) + ";base64" + encoded
 	imageStruct := Image{
 		Width:    width,
 		Height:   height,
 		Format:   format,
 		FileSize: size,
 		Path:     path,
+		DataURL:  dataURL,
 	}
 	return imageStruct, nil
-}
-
-type Project struct {
-	Directory string
-	Images    []Image
-}
-
-func GetProject(path string) (Project, error) {
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		fmt.Printf("Error opening directory: %s\n", err)
-		return Project{}, err
-	}
-	project := Project{
-		Directory: path,
-		Images:    make([]Image, 0),
-	}
-	for _, entry := range entries {
-		imageStruct, err := GetImage(filepath.Join(path, entry.Name()))
-		if err != nil {
-			continue
-		}
-		project.Images = append(project.Images, imageStruct)
-	}
-	return project, nil
 }
