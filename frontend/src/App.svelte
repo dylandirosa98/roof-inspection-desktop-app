@@ -3,9 +3,13 @@
   import logo1 from './assets/images/Hail_Scan_Logo_Dark_Mode-removebg-preview.png'
   let resultText = "Please enter a directory below 👇"
   let directory = ''
-
+  let project = null
   function createProject() {
-    CreateProject(directory).then(result => {resultText = JSON.stringify(result, null, 2)})
+    CreateProject(directory).then(result => {project = result
+      resultText = JSON.stringify(result, null, 2)})
+  }
+  function hasImageData(image) {
+    return image?.DataURL && image?.DataURL.length > 0;
   }
 </script>
 <div class="h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
@@ -34,22 +38,44 @@
     </div>
   </aside>
   <!-- main part of the dashboard -->
-  <main>
+  <main style="background-color: #4B5563;">
     <div class="input-box" id="input">
       <input autocomplete="off" bind:value={directory} class="input text-black mt-[20px]" id="name" type="text"/>
       <button class="btn mt-[20px]" on:click={createProject}>Create Project</button>
     </div>
-    <div class="result" id="result">{resultText}</div>
+    {#if project}
+      <div class="comparison-shell">
+        <div class="image-section">
+          <div class="tile-grid">
+            {#each project.Images as projectImage}
+              <div class="tile">
+                {#if projectImage.Image?.DataURL}
+                  <img
+                          src={projectImage.Image.DataURL}
+                          alt={projectImage.Image.Path}
+                          class="tile-image"
+                  />
+                {:else}
+                  <div class="tile-empty">
+                    {projectImage.Image.Path}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <div class="image-section">
+          <div class="tile-grid">
+            <!-- later -->
+          </div>
+        </div>
+      </div>
+    {/if}
   </main>
 </div>
 
 <style>
-
-  .result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
-  }
 
   .input-box .btn {
     width: auto;
@@ -60,6 +86,8 @@
     margin: 0 0 0 20px;
     padding: 0 8px;
     cursor: pointer;
+    background-color: white;
+    color: black;
   }
 
   .input-box .btn:hover {
@@ -89,4 +117,49 @@
     background-color: rgba(255, 255, 255, 1);
   }
 
+  .tile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .tile-empty {
+    padding: 12px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .tile {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+  }
+
+  .comparison-shell {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+    align-items: start;
+  }
+
+  .tile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .image-section {
+    background: transparent;
+    padding: 16px;
+  }
 </style>

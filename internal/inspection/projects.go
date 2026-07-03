@@ -24,7 +24,7 @@ func CreateProject(path string) (Project, error) {
 		if entry.IsDir() {
 			continue
 		}
-		imageStruct, err := GetImage(filepath.Join(path, entry.Name()))
+		imageStruct, err := GetImagePreview(filepath.Join(path, entry.Name()))
 		if err != nil {
 			continue
 		}

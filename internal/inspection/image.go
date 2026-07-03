@@ -50,3 +50,10 @@ func GetImage(path string) (Image, error) {
 	}
 	return imageStruct, nil
 }
+
+func GetImagePreview(path string) (Image, error) {
+	imageStruct := Image{
+		Path: path,
+	}
+	return imageStruct, nil
+}
