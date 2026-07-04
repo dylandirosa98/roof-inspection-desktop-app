@@ -1,12 +1,16 @@
 package inspection
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"image"
+	"image/jpeg"
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+
+	"golang.org/x/image/draw"
 )
 
 func GetImage(path string) (Image, error) {
@@ -30,23 +34,21 @@ func GetImage(path string) (Image, error) {
 		return Image{}, err
 	}
 	size := info.Size()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Printf("Error reading file: %s\n", err)
-		return Image{}, err
-	}
-	encoded := base64.StdEncoding.EncodeToString(data)
-	if encoded == "" {
-		fmt.Printf("Error decoding file: %s\n", err)
-	}
-	dataURL := "data:" + mimeType(format) + ";base64" + encoded
+	previewWidth := 250
+	previewHeight := 250
+	dst := image.NewRGBA(image.Rect(0, 0, previewWidth, previewHeight))
+	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Over, nil)
+	var buf bytes.Buffer
+	err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 70})
+	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
+	previewurl := fmt.Sprintf("data:image/jpeg;base64,%s", encoded)
 	imageStruct := Image{
-		Width:    width,
-		Height:   height,
-		Format:   format,
-		FileSize: size,
-		Path:     path,
-		DataURL:  dataURL,
+		Width:      width,
+		Height:     height,
+		Format:     format,
+		FileSize:   size,
+		Path:       path,
+		PreviewURL: previewurl,
 	}
 	return imageStruct, nil
 }

@@ -7,6 +7,7 @@ export namespace inspection {
 	    FileSize: number;
 	    Path: string;
 	    DataURL: string;
+	    PreviewURL: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Image(source);
@@ -20,11 +21,12 @@ export namespace inspection {
 	        this.FileSize = source["FileSize"];
 	        this.Path = source["Path"];
 	        this.DataURL = source["DataURL"];
+	        this.PreviewURL = source["PreviewURL"];
 	    }
 	}
 	export class ProjectImage {
-	    ID: number[];
-	    ProjectID: number[];
+	    ID: number;
+	    ProjectID: number;
 	    Image?: Image;
 	
 	    static createFrom(source: any = {}) {
@@ -57,8 +59,9 @@ export namespace inspection {
 		}
 	}
 	export class Project {
-	    ID: number[];
+	    ID: number;
 	    Directory: string;
+	    Name: string;
 	    Images: ProjectImage[];
 	
 	    static createFrom(source: any = {}) {
@@ -69,6 +72,7 @@ export namespace inspection {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ID = source["ID"];
 	        this.Directory = source["Directory"];
+	        this.Name = source["Name"];
 	        this.Images = this.convertValues(source["Images"], ProjectImage);
 	    }
 	

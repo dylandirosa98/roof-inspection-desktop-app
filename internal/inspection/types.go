@@ -1,26 +1,24 @@
 package inspection
 
-import (
-	"github.com/google/uuid"
-)
-
 type Image struct {
-	Width    int
-	Height   int
-	Format   string
-	FileSize int64
-	Path     string
-	DataURL  string
+	Width      int
+	Height     int
+	Format     string
+	FileSize   int64
+	Path       string
+	DataURL    string
+	PreviewURL string
 }
 
 type ProjectImage struct {
-	ID        uuid.UUID
-	ProjectID uuid.UUID
+	ID        int
+	ProjectID int
 	Image     *Image
 }
 
 type Project struct {
-	ID        uuid.UUID
+	ID        int
 	Directory string
+	Name      string
 	Images    []ProjectImage
 }

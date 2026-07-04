@@ -9,7 +9,7 @@
       resultText = JSON.stringify(result, null, 2)})
   }
   function hasImageData(image) {
-    return image?.DataURL && image?.DataURL.length > 0;
+    return image?.PreviewURL && image?.PreviewURL.length > 0;
   }
 </script>
 <div class="h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
@@ -49,9 +49,9 @@
           <div class="tile-grid">
             {#each project.Images as projectImage}
               <div class="tile">
-                {#if projectImage.Image?.DataURL}
+                {#if hasImageData(projectImage.Image)}
                   <img
-                          src={projectImage.Image.DataURL}
+                          src={projectImage.Image.PreviewURL}
                           alt={projectImage.Image.Path}
                           class="tile-image"
                   />
@@ -154,12 +154,26 @@
   .tile-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 60px;
     padding: 16px;
   }
 
   .image-section {
     background: transparent;
     padding: 16px;
+  }
+
+  :global(body) {
+    overflow: hidden;
+  }
+
+  aside {
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  main {
+    overflow-y: auto;
+    min-height: 0;
   }
 </style>

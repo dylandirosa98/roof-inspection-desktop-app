@@ -3,3 +3,7 @@ node_modules
 frontend/dist
 frontend/node_modules
 .idea/
+*.db
+*.sqlite
+*.sqlite3
+data/
