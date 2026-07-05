@@ -26,3 +26,47 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	err := row.Scan(&i.ID, &i.Name, &i.Directory)
 	return i, err
 }
+
+const retrieveProjects = `-- name: RetrieveProjects :many
+SELECT id, name, directory,(
+        SELECT COUNT(*)
+        FROM images
+        WHERE images.project_id = projects.id
+    ) AS image_count
+FROM projects
+`
+
+type RetrieveProjectsRow struct {
+	ID         int64
+	Name       string
+	Directory  string
+	ImageCount int64
+}
+
+func (q *Queries) RetrieveProjects(ctx context.Context) ([]RetrieveProjectsRow, error) {
+	rows, err := q.db.QueryContext(ctx, retrieveProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RetrieveProjectsRow
+	for rows.Next() {
+		var i RetrieveProjectsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Directory,
+			&i.ImageCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
