@@ -3,6 +3,7 @@ module roof-inspection-desktop-app
 go 1.25.7
 
 require (
+	github.com/disintegration/imaging v1.6.2
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/pressly/goose/v3 v3.27.2
 	github.com/wailsapp/wails/v2 v2.12.0

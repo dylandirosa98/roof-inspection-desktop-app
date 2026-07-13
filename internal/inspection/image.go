@@ -2,6 +2,7 @@ package inspection
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"image"
@@ -9,21 +10,26 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
-
-	"golang.org/x/image/draw"
+	"roof-inspection-desktop-app/internal/database"
 )
 
-func GetImage(path string) (Image, error) {
+func GetImage(path string, projectID int64) (database.CreateImageParams, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("Error opening file: %s\n", err)
-		return Image{}, err
+		return database.CreateImageParams{}, err
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			fmt.Printf("Error closing file: %s\n", err)
+		}
+	}()
+
 	img, format, err := image.Decode(file)
 	if err != nil {
 		fmt.Printf("Error decoding file: %s\n", err)
-		return Image{}, err
+		return database.CreateImageParams{}, err
 	}
 	bounds := img.Bounds()
 	width := bounds.Dx()
@@ -31,31 +37,27 @@ func GetImage(path string) (Image, error) {
 	info, err := file.Stat()
 	if err != nil {
 		fmt.Printf("Error checking stats: %s\n", err)
-		return Image{}, err
+		return database.CreateImageParams{}, err
 	}
 	size := info.Size()
-	previewWidth := 250
-	previewHeight := 250
-	dst := image.NewRGBA(image.Rect(0, 0, previewWidth, previewHeight))
-	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Over, nil)
+	dst := makeSquarePreview(img)
 	var buf bytes.Buffer
 	err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 70})
-	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
-	previewurl := fmt.Sprintf("data:image/jpeg;base64,%s", encoded)
-	imageStruct := Image{
-		Width:      width,
-		Height:     height,
-		Format:     format,
-		FileSize:   size,
-		Path:       path,
-		PreviewURL: previewurl,
+	if err != nil {
+		fmt.Printf("Error encoding image: %s\n", err)
+		return database.CreateImageParams{}, err
 	}
-	return imageStruct, nil
-}
-
-func GetImagePreview(path string) (Image, error) {
-	imageStruct := Image{
-		Path: path,
+	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
+	previewURL := fmt.Sprintf("data:image/jpeg;base64,%s", encoded)
+	imageStruct := database.CreateImageParams{
+		Width:      sql.NullInt64{Int64: int64(width), Valid: true},
+		Height:     sql.NullInt64{Int64: int64(height), Valid: true},
+		Format:     sql.NullString{String: format, Valid: true},
+		FileSize:   sql.NullInt64{Int64: size, Valid: true},
+		Path:       path,
+		PreviewUrl: sql.NullString{String: previewURL, Valid: true},
+		DataUrl:    sql.NullString{Valid: false},
+		ProjectID:  projectID,
 	}
 	return imageStruct, nil
 }

@@ -1,33 +1,39 @@
 package inspection
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"roof-inspection-desktop-app/internal/database"
 )
 
-func CreateProject(path string) (Project, error) {
+func CreateProject(path string, name string, q *database.Queries, ctx context.Context) (database.Project, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		fmt.Printf("Error opening directory: %s\n", err)
-		return Project{}, err
+		return database.Project{}, err
 	}
-	project := Project{
+	projectParams := database.CreateProjectParams{
 		Directory: path,
-		Images:    make([]ProjectImage, 0),
+		Name:      name,
+	}
+	project, err := q.CreateProject(ctx, projectParams)
+	if err != nil {
+		return database.Project{}, err
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		imageStruct, err := GetImage(filepath.Join(path, entry.Name()))
+		image, err := GetImage(filepath.Join(path, entry.Name()), project.ID)
 		if err != nil {
 			continue
 		}
-		projectImage := ProjectImage{
-			Image: &imageStruct,
+		_, err = q.CreateImage(ctx, image)
+		if err != nil {
+			fmt.Printf("Error creating image: %s\n", err)
 		}
-		project.Images = append(project.Images, projectImage)
 	}
 	return project, nil
 }
