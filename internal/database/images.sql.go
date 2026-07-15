@@ -52,3 +52,53 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 	)
 	return i, err
 }
+
+const retrieveImages = `-- name: RetrieveImages :many
+SELECT width, height, file_size, format, path, data_url, preview_url, id, project_id FROM images
+WHERE project_id = ?
+`
+
+type RetrieveImagesRow struct {
+	Width      sql.NullInt64
+	Height     sql.NullInt64
+	FileSize   sql.NullInt64
+	Format     sql.NullString
+	Path       string
+	DataUrl    sql.NullString
+	PreviewUrl sql.NullString
+	ID         int64
+	ProjectID  int64
+}
+
+func (q *Queries) RetrieveImages(ctx context.Context, projectID int64) ([]RetrieveImagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, retrieveImages, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RetrieveImagesRow
+	for rows.Next() {
+		var i RetrieveImagesRow
+		if err := rows.Scan(
+			&i.Width,
+			&i.Height,
+			&i.FileSize,
+			&i.Format,
+			&i.Path,
+			&i.DataUrl,
+			&i.PreviewUrl,
+			&i.ID,
+			&i.ProjectID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

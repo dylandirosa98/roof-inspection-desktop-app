@@ -1,15 +1,32 @@
 <script>
   import {CreateProject} from '../wailsjs/go/main/App.js'
+  import {PickDirectory} from "../wailsjs/go/main/App.js";
+  import {RetrieveProject} from "../wailsjs/go/main/App.js";
   import logo1 from './assets/images/Hail_Scan_Logo_Dark_Mode-removebg-preview.png'
   let resultText = "Please enter a directory below 👇"
   let directory = ''
+  let name = ''
   let project = null
+  let id = null
+  let images = []
   function createProject() {
-    CreateProject(directory).then(result => {project = result
-      resultText = JSON.stringify(result, null, 2)})
+    CreateProject(directory, name).then(result => {project = result
+      resultText = JSON.stringify(result, null, 2)
+      id = result.ID
+      RetrieveProject(id).then(imageResults => {
+        images = imageResults
+      })
+    })
   }
   function hasImageData(image) {
-    return image?.PreviewURL && image?.PreviewURL.length > 0;
+    return image?.PreviewUrl.String && image?.PreviewUrl.String.length > 0;
+  }
+
+  async function chooseDirectory() {
+    const selected = await PickDirectory()
+    if (selected) {
+      directory = selected
+    }
   }
 </script>
 <div class="h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
@@ -40,24 +57,32 @@
   <!-- main part of the dashboard -->
   <main style="background-color: #4B5563;">
     <div class="input-box" id="input">
-      <input autocomplete="off" bind:value={directory} class="input text-black mt-[20px]" id="name" type="text"/>
+      <label for="project-name">Project Name</label>
+      <input autocomplete="off" bind:value={name} class="input text-black mt-[20px]" id="project-name" type="text"/>
+
+      <label for="project-directory" class="mt-[10px] block">Directory</label>
+      <div class="flex gap-2 mt-[8px]">
+        <input autocomplete="off" bind:value={directory} class="input text-black" id="project-directory" type="text" readonly/>
+        <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
+      </div>
+
       <button class="btn mt-[20px]" on:click={createProject}>Create Project</button>
     </div>
     {#if project}
       <div class="comparison-shell">
         <div class="image-section">
           <div class="tile-grid">
-            {#each project.Images as projectImage}
+            {#each images as image}
               <div class="tile">
-                {#if hasImageData(projectImage.Image)}
+                {#if hasImageData(image)}
                   <img
-                          src={projectImage.Image.PreviewURL}
-                          alt={projectImage.Image.Path}
+                          src={image.PreviewUrl.String}
+                          alt={image.Path}
                           class="tile-image"
                   />
                 {:else}
                   <div class="tile-empty">
-                    {projectImage.Image.Path}
+                    {image.Path}
                   </div>
                 {/if}
               </div>

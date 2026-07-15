@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -64,4 +65,22 @@ func (a *App) CreateProject(path string, name string) (database.Project, error) 
 		return project, err
 	}
 	return project, nil
+}
+
+func (a *App) RetrieveProject(id int64) ([]database.RetrieveImagesRow, error) {
+	images, err := a.queries.RetrieveImages(a.ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return images, nil
+}
+
+func (a *App) PickDirectory() (string, error) {
+	selected, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select Project Directory",
+	})
+	if err != nil {
+		return "", err
+	}
+	return selected, nil
 }
