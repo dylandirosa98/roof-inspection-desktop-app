@@ -4,7 +4,7 @@
   import {RetrieveProject} from "../wailsjs/go/main/App.js";
   import {GetProjects} from "../wailsjs/go/main/App.js";
   import { onMount } from 'svelte'
-  import logo1 from './assets/images/Hail_Scan_Logo_Dark_Mode-removebg-preview.png'
+  import logo1 from './assets/images/spartan-logo-dark.png'
   let resultText = "Please enter a directory below 👇"
   let directory = ''
   let name = ''
@@ -40,14 +40,20 @@
   onMount(() => {
     getProjects()
   })
+
+  function selectProject(selectedProject) {
+    project = selectedProject
+    id = selectedProject.ID
+    RetrieveProject(id).then(imageResults => {images = imageResults})
+  }
 </script>
 <div class="h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
   <!-- Left Sidebar -->
   <aside class="border-r border-slate-800 p-4 bg-black p-4 flex flex-col">
-    <div class="flex justify-center mt-[-80px]">
-      <img src={logo1} alt="logo" class="w-[290px] h-[290px] flex flex-col items-center gap-2"/>
+    <div class="flex justify-center mt-[-40px]">
+      <img src={logo1} alt="logo" class="w-[220px] h-[220px] object-contain"/>
     </div>
-    <hr class="mt-[-50px]">
+    <hr class="mt-[-10px]">
     <div>
       <h2 class="mt-[10px] mb-[8px] text-xl text-slate-400 mb">
         All Projects
@@ -55,9 +61,9 @@
       <!-- Scrollable project cards -->
       <div class="flex-1 overflow-y-auto space-y-3 pr-1">
         {#each projects as project}
-          <button class="w-full text-left p-3 rounded-lg bg-[#1f2937] hover:bg[#374151]">
+          <button on:click={() => selectProject(project)} class="w-full text-left p-3 rounded-lg bg-[#1f2937] hover:bg[#374151]">
             <p class="font-semibold">{project.Name}</p>
-            <p class="text-sm text-gray-600">{project.ImageCount} images</p>
+            <p class="text-sm text-gray-500">{project.ImageCount} images</p>
           </button>
         {/each}
       </div>
