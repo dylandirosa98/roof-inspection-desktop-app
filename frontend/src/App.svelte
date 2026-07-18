@@ -2,6 +2,8 @@
   import {CreateProject} from '../wailsjs/go/main/App.js'
   import {PickDirectory} from "../wailsjs/go/main/App.js";
   import {RetrieveProject} from "../wailsjs/go/main/App.js";
+  import {GetProjects} from "../wailsjs/go/main/App.js";
+  import { onMount } from 'svelte'
   import logo1 from './assets/images/Hail_Scan_Logo_Dark_Mode-removebg-preview.png'
   let resultText = "Please enter a directory below 👇"
   let directory = ''
@@ -9,6 +11,7 @@
   let project = null
   let id = null
   let images = []
+  let projects = []
   function createProject() {
     CreateProject(directory, name).then(result => {project = result
       resultText = JSON.stringify(result, null, 2)
@@ -16,6 +19,7 @@
       RetrieveProject(id).then(imageResults => {
         images = imageResults
       })
+      getProjects()
     })
   }
   function hasImageData(image) {
@@ -28,6 +32,14 @@
       directory = selected
     }
   }
+  async function getProjects() {
+    GetProjects().then(results => {
+      projects = results
+    })
+  }
+  onMount(() => {
+    getProjects()
+  })
 </script>
 <div class="h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
   <!-- Left Sidebar -->
@@ -42,31 +54,47 @@
       </h2>
       <!-- Scrollable project cards -->
       <div class="flex-1 overflow-y-auto space-y-3 pr-1">
-        <button class="w-full text-left p-3 rounded-lg bg-[#1f2937] hover:bg[#374151]">
-          <p class="font-semibold">Example House</p>
-          <p class="text-sm text-gray-500">48 images</p>
-        </button>
-
-        <button class="w-full text-left p-3 rounded-lg bg-[#1f2937] hover:bg[#374151]">
-          <p class="font-semibold">Example House 2</p>
-          <p class="text-sm text-gray-500">27 images</p>
-        </button>
+        {#each projects as project}
+          <button class="w-full text-left p-3 rounded-lg bg-[#1f2937] hover:bg[#374151]">
+            <p class="font-semibold">{project.Name}</p>
+            <p class="text-sm text-gray-600">{project.ImageCount} images</p>
+          </button>
+        {/each}
       </div>
     </div>
   </aside>
   <!-- main part of the dashboard -->
   <main style="background-color: #4B5563;">
     <div class="input-box" id="input">
-      <label for="project-name">Project Name</label>
-      <input autocomplete="off" bind:value={name} class="input text-black mt-[20px]" id="project-name" type="text"/>
-
-      <label for="project-directory" class="mt-[10px] block">Directory</label>
-      <div class="flex gap-2 mt-[8px]">
-        <input autocomplete="off" bind:value={directory} class="input text-black" id="project-directory" type="text" readonly/>
-        <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
+      <div class="form-group">
+        <label for="project-name">Project Name</label>
+        <input
+                autocomplete="off"
+                bind:value={name}
+                class="input text-black"
+                id="project-name"
+                type="text"
+        />
       </div>
 
-      <button class="btn mt-[20px]" on:click={createProject}>Create Project</button>
+      <div class="form-group">
+        <label for="project-directory">Directory</label>
+        <div class="directory-row">
+          <input
+                  autocomplete="off"
+                  bind:value={directory}
+                  class="input text-black"
+                  id="project-directory"
+                  type="text"
+                  readonly
+          />
+          <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn" on:click={createProject}>Create Project</button>
+      </div>
     </div>
     {#if project}
       <div class="comparison-shell">
@@ -200,5 +228,35 @@
   main {
     overflow-y: auto;
     min-height: 0;
+  }
+
+  .input-box {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .directory-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .directory-row input {
+    flex: 1;
+  }
+
+  .action-row {
+    display: flex;
+    justify-content: center;
   }
 </style>

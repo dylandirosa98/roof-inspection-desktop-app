@@ -75,6 +75,14 @@ func (a *App) RetrieveProject(id int64) ([]database.RetrieveImagesRow, error) {
 	return images, nil
 }
 
+func (a *App) GetProjects() []database.RetrieveProjectsRow {
+	projects, err := a.queries.RetrieveProjects(a.ctx)
+	if err != nil {
+		return nil
+	}
+	return projects
+}
+
 func (a *App) PickDirectory() (string, error) {
 	selected, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Select Project Directory",

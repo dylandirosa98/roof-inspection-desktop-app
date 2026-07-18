@@ -62,6 +62,24 @@ export namespace database {
 		    return a;
 		}
 	}
+	export class RetrieveProjectsRow {
+	    ID: number;
+	    Name: string;
+	    Directory: string;
+	    ImageCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new RetrieveProjectsRow(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
+	        this.Name = source["Name"];
+	        this.Directory = source["Directory"];
+	        this.ImageCount = source["ImageCount"];
+	    }
+	}
 
 }
 
