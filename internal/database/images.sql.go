@@ -10,6 +10,49 @@ import (
 	"database/sql"
 )
 
+const createAiImage = `-- name: CreateAiImage :one
+INSERT INTO ai_images (width, height, file_size, format, path, data_url, preview_url, image_id )
+VALUES (?,?,?,?,?,?,?,?)
+RETURNING id, width, height, file_size, format, path, data_url, preview_url, image_id
+`
+
+type CreateAiImageParams struct {
+	Width      sql.NullInt64
+	Height     sql.NullInt64
+	FileSize   sql.NullInt64
+	Format     sql.NullString
+	Path       string
+	DataUrl    sql.NullString
+	PreviewUrl sql.NullString
+	ImageID    int64
+}
+
+func (q *Queries) CreateAiImage(ctx context.Context, arg CreateAiImageParams) (AiImage, error) {
+	row := q.db.QueryRowContext(ctx, createAiImage,
+		arg.Width,
+		arg.Height,
+		arg.FileSize,
+		arg.Format,
+		arg.Path,
+		arg.DataUrl,
+		arg.PreviewUrl,
+		arg.ImageID,
+	)
+	var i AiImage
+	err := row.Scan(
+		&i.ID,
+		&i.Width,
+		&i.Height,
+		&i.FileSize,
+		&i.Format,
+		&i.Path,
+		&i.DataUrl,
+		&i.PreviewUrl,
+		&i.ImageID,
+	)
+	return i, err
+}
+
 const createImage = `-- name: CreateImage :one
 INSERT INTO images (width, height, file_size, format, path, data_url, preview_url, project_id )
 VALUES (?,?,?,?,?,?,?,?)
@@ -51,6 +94,53 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 		&i.ProjectID,
 	)
 	return i, err
+}
+
+const retrieveAiImages = `-- name: RetrieveAiImages :many
+SELECT images.path, images.preview_url, images.id, ai_images.path, ai_images.preview_url, ai_images.id FROM images
+LEFT JOIN ai_images
+    ON images.id = ai_images.image_id
+WHERE project_id = ?
+ORDER BY ai_images.id IS NOT NULL DESC, images.id
+`
+
+type RetrieveAiImagesRow struct {
+	Path         string
+	PreviewUrl   sql.NullString
+	ID           int64
+	Path_2       sql.NullString
+	PreviewUrl_2 sql.NullString
+	ID_2         sql.NullInt64
+}
+
+func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]RetrieveAiImagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, retrieveAiImages, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RetrieveAiImagesRow
+	for rows.Next() {
+		var i RetrieveAiImagesRow
+		if err := rows.Scan(
+			&i.Path,
+			&i.PreviewUrl,
+			&i.ID,
+			&i.Path_2,
+			&i.PreviewUrl_2,
+			&i.ID_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const retrieveImages = `-- name: RetrieveImages :many

@@ -8,6 +8,18 @@ import (
 	"database/sql"
 )
 
+type AiImage struct {
+	ID         int64
+	Width      sql.NullInt64
+	Height     sql.NullInt64
+	FileSize   sql.NullInt64
+	Format     sql.NullString
+	Path       string
+	DataUrl    sql.NullString
+	PreviewUrl sql.NullString
+	ImageID    int64
+}
+
 type Image struct {
 	ID         int64
 	Width      sql.NullInt64

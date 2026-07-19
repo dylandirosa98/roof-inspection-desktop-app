@@ -46,12 +46,18 @@
     id = selectedProject.ID
     RetrieveProject(id).then(imageResults => {images = imageResults})
   }
+
+  function clearProject(){
+    project = null
+    id = null
+    images = []
+  }
 </script>
 <div class="h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
   <!-- Left Sidebar -->
   <aside class="border-r border-slate-800 p-4 bg-black p-4 flex flex-col">
     <div class="flex justify-center mt-[-40px]">
-      <img src={logo1} alt="logo" class="w-[220px] h-[220px] object-contain"/>
+      <img src={logo1} alt="logo" class="w-[240px] h-[240px] object-contain"/>
     </div>
     <hr class="mt-[-10px]">
     <div>
@@ -71,37 +77,50 @@
   </aside>
   <!-- main part of the dashboard -->
   <main style="background-color: #4B5563;">
-    <div class="input-box" id="input">
-      <div class="form-group">
-        <label for="project-name">Project Name</label>
-        <input
-                autocomplete="off"
-                bind:value={name}
-                class="input text-black"
-                id="project-name"
-                type="text"
-        />
-      </div>
+    {#if project}
+      <div class="current-project relative flex items-center justify-center p-4 mt-[10px] mb-[-10px]">
+        <h2 class="font-sans text-3xl font-bold tracking-wide">{project.Name}</h2>
 
-      <div class="form-group">
-        <label for="project-directory">Directory</label>
-        <div class="directory-row">
+        <button
+                class="absolute right-12 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                on:click={clearProject}
+        >
+          Exit Project
+        </button>
+      </div>
+    {:else}
+      <div class="input-box" id="input">
+        <div class="form-group">
+          <label for="project-name">Project Name</label>
           <input
                   autocomplete="off"
-                  bind:value={directory}
+                  bind:value={name}
                   class="input text-black"
-                  id="project-directory"
+                  id="project-name"
                   type="text"
-                  readonly
           />
-          <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
+        </div>
+
+        <div class="form-group">
+          <label for="project-directory">Directory</label>
+          <div class="directory-row">
+            <input
+                    autocomplete="off"
+                    bind:value={directory}
+                    class="input text-black"
+                    id="project-directory"
+                    type="text"
+                    readonly
+            />
+            <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn" on:click={createProject}>Create Project</button>
         </div>
       </div>
-
-      <div class="action-row">
-        <button class="btn" on:click={createProject}>Create Project</button>
-      </div>
-    </div>
+    {/if}
     {#if project}
       <div class="comparison-shell">
         <div class="image-section">
