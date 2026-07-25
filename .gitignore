@@ -7,3 +7,20 @@ frontend/node_modules
 *.sqlite
 *.sqlite3
 data/
+datasets/
+.venv/
+runs/
+models/
+# Training / AI artifacts
+  yolo*.pt
+
+  # Secrets and Python caches
+  .env
+  .env.*
+  !.env.example
+  __pycache__/
+  .pytest_cache/
+  .coverage
+
+  # OS files
+  .DS_Store
