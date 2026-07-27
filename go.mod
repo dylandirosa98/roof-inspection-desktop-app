@@ -7,6 +7,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/pressly/goose/v3 v3.27.2
 	github.com/wailsapp/wails/v2 v2.12.0
+	github.com/yalue/onnxruntime_go v1.31.0
 )
 
 require (
