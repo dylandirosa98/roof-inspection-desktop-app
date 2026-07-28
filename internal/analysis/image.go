@@ -8,17 +8,31 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-func ResizeImage(imag database.Image) (image.Image, error) {
+type PreprocessedImage struct {
+	Original image.Image
+	Resized  image.Image
+	Scale    float32
+	XPadding float32
+	YPadding float32
+}
+
+func ResizeImage(imag database.Image) (PreprocessedImage, error) {
 	img, err := imaging.Open(imag.Path)
 	if err != nil {
-		return nil, err
+		return PreprocessedImage{}, err
 	}
 	newImg := imaging.Fit(img, 640, 640, imaging.Lanczos)
 	xOffset := (640 - newImg.Bounds().Dx()) / 2
 	yOffset := (640 - newImg.Bounds().Dy()) / 2
 	finalImage := imaging.New(640, 640, color.NRGBA{A: 255})
 	point := image.Point{X: xOffset, Y: yOffset}
-	return imaging.Paste(finalImage, newImg, point), nil
+	return PreprocessedImage{
+		Original: img,
+		Resized:  imaging.Paste(finalImage, newImg, point),
+		Scale:    float32(newImg.Bounds().Dx()) / float32(img.Bounds().Dx()),
+		XPadding: float32(xOffset),
+		YPadding: float32(yOffset),
+	}, nil
 }
 
 func ImageToPixel(img image.Image) []float32 {
