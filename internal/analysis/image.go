@@ -8,43 +8,44 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-type PreprocessedImage struct {
+type PreparedImage struct {
 	Original image.Image
-	Resized  image.Image
+	Model    image.Image
 	Scale    float32
-	XPadding float32
-	YPadding float32
+	PaddingX float32
+	PaddingY float32
 }
 
-func ResizeImage(imag database.Image) (PreprocessedImage, error) {
-	img, err := imaging.Open(imag.Path)
+func PrepareImage(imageRecord database.Image) (PreparedImage, error) {
+	original, err := imaging.Open(imageRecord.Path)
 	if err != nil {
-		return PreprocessedImage{}, err
+		return PreparedImage{}, err
 	}
-	newImg := imaging.Fit(img, 640, 640, imaging.Lanczos)
-	xOffset := (640 - newImg.Bounds().Dx()) / 2
-	yOffset := (640 - newImg.Bounds().Dy()) / 2
-	finalImage := imaging.New(640, 640, color.NRGBA{A: 255})
-	point := image.Point{X: xOffset, Y: yOffset}
-	return PreprocessedImage{
-		Original: img,
-		Resized:  imaging.Paste(finalImage, newImg, point),
-		Scale:    float32(newImg.Bounds().Dx()) / float32(img.Bounds().Dx()),
-		XPadding: float32(xOffset),
-		YPadding: float32(yOffset),
+	fitted := imaging.Fit(original, 640, 640, imaging.Lanczos)
+	xOffset := (640 - fitted.Bounds().Dx()) / 2
+	yOffset := (640 - fitted.Bounds().Dy()) / 2
+	canvas := imaging.New(640, 640, color.NRGBA{A: 255})
+
+	// The model always receives a 640x640 letterboxed image.
+	return PreparedImage{
+		Original: original,
+		Model:    imaging.Paste(canvas, fitted, image.Point{X: xOffset, Y: yOffset}),
+		Scale:    float32(fitted.Bounds().Dx()) / float32(original.Bounds().Dx()),
+		PaddingX: float32(xOffset),
+		PaddingY: float32(yOffset),
 	}, nil
 }
 
-func ImageToPixel(img image.Image) []float32 {
-	finalList := make([]float32, 3*640*640)
-	for i := 0; i < 640; i++ {
-		for j := 0; j < 640; j++ {
-			r, g, b, _ := img.At(j, i).RGBA()
-			index := i*640 + j
-			finalList[index] = float32(r) / 65535
-			finalList[index+(640*640)] = float32(g) / 65535
-			finalList[index+(2*640*640)] = float32(b) / 65535
+func imageToModelInput(image image.Image) []float32 {
+	pixels := make([]float32, 3*640*640)
+	for y := 0; y < 640; y++ {
+		for x := 0; x < 640; x++ {
+			r, g, b, _ := image.At(x, y).RGBA()
+			pixelIndex := y*640 + x
+			pixels[pixelIndex] = float32(r) / 65535
+			pixels[pixelIndex+(640*640)] = float32(g) / 65535
+			pixels[pixelIndex+(2*640*640)] = float32(b) / 65535
 		}
 	}
-	return finalList
+	return pixels
 }

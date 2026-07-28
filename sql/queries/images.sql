@@ -9,12 +9,18 @@ SELECT width, height, file_size, format, path, data_url, preview_url, id, projec
 WHERE project_id = ?;
 
 -- name: CreateAiImage :one
-INSERT INTO ai_images (width, height, file_size, format, path, data_url, preview_url, image_id, annotations_json )
-VALUES (?,?,?,?,?,?,?,?,?)
-RETURNING id, width, height, file_size, format, path, data_url, preview_url, image_id;
+INSERT INTO ai_images (image_id, annotations_json)
+VALUES (?, ?)
+RETURNING id, image_id;
 
 -- name: RetrieveAiImages :many
-SELECT images.path, images.preview_url, images.id, ai_images.path, ai_images.preview_url, ai_images.id, ai_images.annotations_json FROM images
+SELECT
+    images.id AS image_id,
+    images.path AS image_path,
+    images.preview_url AS image_preview_url,
+    ai_images.id AS ai_image_id,
+    ai_images.annotations_json
+FROM images
 LEFT JOIN ai_images
     ON images.id = ai_images.image_id
 WHERE project_id = ?

@@ -11,59 +11,25 @@ import (
 )
 
 const createAiImage = `-- name: CreateAiImage :one
-INSERT INTO ai_images (width, height, file_size, format, path, data_url, preview_url, image_id, annotations_json )
-VALUES (?,?,?,?,?,?,?,?,?)
-RETURNING id, width, height, file_size, format, path, data_url, preview_url, image_id
+INSERT INTO ai_images (image_id, annotations_json)
+VALUES (?, ?)
+RETURNING id, image_id
 `
 
 type CreateAiImageParams struct {
-	Width           sql.NullInt64
-	Height          sql.NullInt64
-	FileSize        sql.NullInt64
-	Format          sql.NullString
-	Path            string
-	DataUrl         sql.NullString
-	PreviewUrl      sql.NullString
 	ImageID         int64
 	AnnotationsJson sql.NullString
 }
 
 type CreateAiImageRow struct {
-	ID         int64
-	Width      sql.NullInt64
-	Height     sql.NullInt64
-	FileSize   sql.NullInt64
-	Format     sql.NullString
-	Path       string
-	DataUrl    sql.NullString
-	PreviewUrl sql.NullString
-	ImageID    int64
+	ID      int64
+	ImageID int64
 }
 
 func (q *Queries) CreateAiImage(ctx context.Context, arg CreateAiImageParams) (CreateAiImageRow, error) {
-	row := q.db.QueryRowContext(ctx, createAiImage,
-		arg.Width,
-		arg.Height,
-		arg.FileSize,
-		arg.Format,
-		arg.Path,
-		arg.DataUrl,
-		arg.PreviewUrl,
-		arg.ImageID,
-		arg.AnnotationsJson,
-	)
+	row := q.db.QueryRowContext(ctx, createAiImage, arg.ImageID, arg.AnnotationsJson)
 	var i CreateAiImageRow
-	err := row.Scan(
-		&i.ID,
-		&i.Width,
-		&i.Height,
-		&i.FileSize,
-		&i.Format,
-		&i.Path,
-		&i.DataUrl,
-		&i.PreviewUrl,
-		&i.ImageID,
-	)
+	err := row.Scan(&i.ID, &i.ImageID)
 	return i, err
 }
 
@@ -111,7 +77,13 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 }
 
 const retrieveAiImages = `-- name: RetrieveAiImages :many
-SELECT images.path, images.preview_url, images.id, ai_images.path, ai_images.preview_url, ai_images.id, ai_images.annotations_json FROM images
+SELECT
+    images.id AS image_id,
+    images.path AS image_path,
+    images.preview_url AS image_preview_url,
+    ai_images.id AS ai_image_id,
+    ai_images.annotations_json
+FROM images
 LEFT JOIN ai_images
     ON images.id = ai_images.image_id
 WHERE project_id = ?
@@ -119,12 +91,10 @@ ORDER BY ai_images.id IS NOT NULL DESC, images.id
 `
 
 type RetrieveAiImagesRow struct {
-	Path            string
-	PreviewUrl      sql.NullString
-	ID              int64
-	Path_2          sql.NullString
-	PreviewUrl_2    sql.NullString
-	ID_2            sql.NullInt64
+	ImageID         int64
+	ImagePath       string
+	ImagePreviewUrl sql.NullString
+	AiImageID       sql.NullInt64
 	AnnotationsJson sql.NullString
 }
 
@@ -138,12 +108,10 @@ func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]Retr
 	for rows.Next() {
 		var i RetrieveAiImagesRow
 		if err := rows.Scan(
-			&i.Path,
-			&i.PreviewUrl,
-			&i.ID,
-			&i.Path_2,
-			&i.PreviewUrl_2,
-			&i.ID_2,
+			&i.ImageID,
+			&i.ImagePath,
+			&i.ImagePreviewUrl,
+			&i.AiImageID,
 			&i.AnnotationsJson,
 		); err != nil {
 			return nil, err

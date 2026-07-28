@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
+	"roof-inspection-desktop-app/internal/analysis"
 	"roof-inspection-desktop-app/internal/database"
 	"roof-inspection-desktop-app/internal/inspection"
 
@@ -91,4 +93,27 @@ func (a *App) PickDirectory() (string, error) {
 		return "", err
 	}
 	return selected, nil
+}
+
+func (a *App) AnalyzeImage(image database.Image) (analysis.AnalysisResult, error) {
+	analysisResult, err := analysis.AnalyzeImage(image)
+	if err != nil {
+		return analysis.AnalysisResult{}, err
+	}
+	annotationsJSON, err := json.Marshal(analysisResult)
+	if err != nil {
+		return analysis.AnalysisResult{}, err
+	}
+	aiImage := database.CreateAiImageParams{
+		ImageID: image.ID,
+		AnnotationsJson: sql.NullString{
+			String: string(annotationsJSON),
+			Valid:  true,
+		},
+	}
+	_, err = a.queries.CreateAiImage(a.ctx, aiImage)
+	if err != nil {
+		return analysis.AnalysisResult{}, err
+	}
+	return analysisResult, nil
 }
