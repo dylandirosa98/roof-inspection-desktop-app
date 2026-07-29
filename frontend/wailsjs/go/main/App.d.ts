@@ -9,6 +9,8 @@ export function AnalyzeProject(arg1:database.Project):Promise<void>;
 
 export function CreateProject(arg1:string,arg2:string):Promise<database.Project>;
 
+export function GetOriginalImageDataURL(arg1:number):Promise<string>;
+
 export function GetProjects():Promise<Array<database.RetrieveProjectsRow>>;
 
 export function Greet(arg1:string):Promise<string>;

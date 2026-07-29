@@ -8,6 +8,10 @@ RETURNING id, width, height, file_size, format, path, data_url, preview_url, pro
 SELECT width, height, file_size, format, path, data_url, preview_url, id, project_id FROM images
 WHERE project_id = ?;
 
+-- name: RetrieveImage :one
+SELECT id, width, height, file_size, format, path, data_url, preview_url, project_id FROM images
+WHERE id = ?;
+
 -- name: CreateAiImage :one
 INSERT INTO ai_images (image_id, annotations_json)
 VALUES (?, ?)
@@ -17,6 +21,8 @@ RETURNING id, image_id;
 SELECT
     images.id AS image_id,
     images.path AS image_path,
+    images.width AS image_width,
+    images.height AS image_height,
     images.preview_url AS image_preview_url,
     ai_images.id AS ai_image_id,
     ai_images.annotations_json

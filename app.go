@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +13,7 @@ import (
 	"roof-inspection-desktop-app/internal/database"
 	"roof-inspection-desktop-app/internal/inspection"
 
+	"github.com/disintegration/imaging"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -148,4 +151,23 @@ func (a *App) AnalyzeProject(project database.Project) error {
 
 func (a *App) RetrieveAiImages(projectID int64) ([]database.RetrieveAiImagesRow, error) {
 	return a.queries.RetrieveAiImages(a.ctx, projectID)
+}
+
+func (a *App) GetOriginalImageDataURL(imageID int64) (string, error) {
+	image, err := a.queries.RetrieveImage(a.ctx, imageID)
+	if err != nil {
+		return "", err
+	}
+
+	original, err := imaging.Open(image.Path)
+	if err != nil {
+		return "", err
+	}
+
+	var encoded bytes.Buffer
+	if err := imaging.Encode(&encoded, original, imaging.JPEG); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(encoded.Bytes())), nil
 }

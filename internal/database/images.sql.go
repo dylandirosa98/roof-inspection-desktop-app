@@ -80,6 +80,8 @@ const retrieveAiImages = `-- name: RetrieveAiImages :many
 SELECT
     images.id AS image_id,
     images.path AS image_path,
+    images.width AS image_width,
+    images.height AS image_height,
     images.preview_url AS image_preview_url,
     ai_images.id AS ai_image_id,
     ai_images.annotations_json
@@ -93,6 +95,8 @@ ORDER BY ai_images.id IS NOT NULL DESC, images.id
 type RetrieveAiImagesRow struct {
 	ImageID         int64
 	ImagePath       string
+	ImageWidth      sql.NullInt64
+	ImageHeight     sql.NullInt64
 	ImagePreviewUrl sql.NullString
 	AiImageID       sql.NullInt64
 	AnnotationsJson sql.NullString
@@ -110,6 +114,8 @@ func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]Retr
 		if err := rows.Scan(
 			&i.ImageID,
 			&i.ImagePath,
+			&i.ImageWidth,
+			&i.ImageHeight,
 			&i.ImagePreviewUrl,
 			&i.AiImageID,
 			&i.AnnotationsJson,
@@ -125,6 +131,28 @@ func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]Retr
 		return nil, err
 	}
 	return items, nil
+}
+
+const retrieveImage = `-- name: RetrieveImage :one
+SELECT id, width, height, file_size, format, path, data_url, preview_url, project_id FROM images
+WHERE id = ?
+`
+
+func (q *Queries) RetrieveImage(ctx context.Context, id int64) (Image, error) {
+	row := q.db.QueryRowContext(ctx, retrieveImage, id)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.Width,
+		&i.Height,
+		&i.FileSize,
+		&i.Format,
+		&i.Path,
+		&i.DataUrl,
+		&i.PreviewUrl,
+		&i.ProjectID,
+	)
+	return i, err
 }
 
 const retrieveImages = `-- name: RetrieveImages :many

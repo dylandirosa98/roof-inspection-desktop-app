@@ -130,6 +130,8 @@ export namespace database {
 	export class RetrieveAiImagesRow {
 	    ImageID: number;
 	    ImagePath: string;
+	    ImageWidth: sql.NullInt64;
+	    ImageHeight: sql.NullInt64;
 	    ImagePreviewUrl: sql.NullString;
 	    AiImageID: sql.NullInt64;
 	    AnnotationsJson: sql.NullString;
@@ -142,6 +144,8 @@ export namespace database {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ImageID = source["ImageID"];
 	        this.ImagePath = source["ImagePath"];
+	        this.ImageWidth = this.convertValues(source["ImageWidth"], sql.NullInt64);
+	        this.ImageHeight = this.convertValues(source["ImageHeight"], sql.NullInt64);
 	        this.ImagePreviewUrl = this.convertValues(source["ImagePreviewUrl"], sql.NullString);
 	        this.AiImageID = this.convertValues(source["AiImageID"], sql.NullInt64);
 	        this.AnnotationsJson = this.convertValues(source["AnnotationsJson"], sql.NullString);
