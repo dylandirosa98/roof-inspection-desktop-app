@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"roof-inspection-desktop-app/internal/analysis"
@@ -95,7 +96,18 @@ func (a *App) PickDirectory() (string, error) {
 	return selected, nil
 }
 
-func (a *App) AnalyzeImage(image database.Image) (analysis.AnalysisResult, error) {
+func (a *App) AnalyzeImage(imageRow database.RetrieveImagesRow) (analysis.AnalysisResult, error) {
+	image := database.Image{
+		ID:         imageRow.ID,
+		Width:      imageRow.Width,
+		Height:     imageRow.Height,
+		FileSize:   imageRow.FileSize,
+		Format:     imageRow.Format,
+		Path:       imageRow.Path,
+		DataUrl:    imageRow.DataUrl,
+		PreviewUrl: imageRow.PreviewUrl,
+		ProjectID:  imageRow.ProjectID,
+	}
 	analysisResult, err := analysis.AnalyzeImage(image)
 	if err != nil {
 		return analysis.AnalysisResult{}, err
@@ -116,4 +128,24 @@ func (a *App) AnalyzeImage(image database.Image) (analysis.AnalysisResult, error
 		return analysis.AnalysisResult{}, err
 	}
 	return analysisResult, nil
+}
+
+func (a *App) AnalyzeProject(project database.Project) error {
+	images, err := a.queries.RetrieveImages(a.ctx, project.ID)
+	if err != nil {
+		return err
+	}
+
+	var analysisErrors []error
+	for _, image := range images {
+		_, err := a.AnalyzeImage(image)
+		if err != nil {
+			analysisErrors = append(analysisErrors, fmt.Errorf("image %d: %w", image.ID, err))
+		}
+	}
+	return errors.Join(analysisErrors...)
+}
+
+func (a *App) RetrieveAiImages(projectID int64) ([]database.RetrieveAiImagesRow, error) {
+	return a.queries.RetrieveAiImages(a.ctx, projectID)
 }
