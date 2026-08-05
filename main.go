@@ -11,6 +11,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed frontend/src/assets/images/spartan-exteriors-logo.png
+var reportLogo []byte
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()

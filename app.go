@@ -9,9 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"roof-inspection-desktop-app/internal/analysis"
 	"roof-inspection-desktop-app/internal/database"
 	"roof-inspection-desktop-app/internal/inspection"
+	inspectionreports "roof-inspection-desktop-app/internal/inspection-reports"
+	goruntime "runtime"
+	"strings"
 
 	"github.com/disintegration/imaging"
 	_ "github.com/mattn/go-sqlite3"
@@ -89,6 +94,81 @@ func (a *App) GetProjects() []database.RetrieveProjectsRow {
 	return projects
 }
 
+func (a *App) CreateInspectionReport(projectID int64, reportNumber string) (database.InspectionReport, error) {
+	if strings.TrimSpace(reportNumber) == "" {
+		return database.InspectionReport{}, errors.New("report number is required")
+	}
+
+	return a.queries.CreateInspectionReport(a.ctx, database.CreateInspectionReportParams{
+		ProjectID:    projectID,
+		ReportNumber: reportNumber,
+	})
+}
+
+func (a *App) GetInspectionReportByProjectID(projectID int64) (database.InspectionReport, error) {
+	return a.queries.GetInspectionReportByProjectID(a.ctx, projectID)
+}
+
+func (a *App) UpdateInspectionReport(report database.UpdateInspectionReportParams) (database.InspectionReport, error) {
+	if strings.TrimSpace(report.ReportNumber) == "" {
+		return database.InspectionReport{}, errors.New("report number is required")
+	}
+
+	return a.queries.UpdateInspectionReport(a.ctx, report)
+}
+
+func (a *App) GenerateInspectionReport(reportID int64, outputPath string) (inspectionreports.Result, error) {
+	report, err := a.queries.GetInspectionReport(a.ctx, reportID)
+	if err != nil {
+		return inspectionreports.Result{}, err
+	}
+
+	images, err := a.queries.RetrieveReviewedReportImages(a.ctx, reportID)
+	if err != nil {
+		return inspectionreports.Result{}, err
+	}
+
+	result, err := inspectionreports.Generate(report, images, outputPath, reportLogo)
+	if err != nil {
+		return inspectionreports.Result{}, err
+	}
+	if err := a.queries.UpdateInspectionReportOutput(a.ctx, database.UpdateInspectionReportOutputParams{
+		LastGeneratedPdfPath: outputPath,
+		ID:                   reportID,
+	}); err != nil {
+		return inspectionreports.Result{}, err
+	}
+
+	return result, nil
+}
+
+func (a *App) OpenLastGeneratedInspectionReport(reportID int64) error {
+	report, err := a.queries.GetInspectionReport(a.ctx, reportID)
+	if err != nil {
+		return err
+	}
+	if report.LastGeneratedPdfPath == "" {
+		return errors.New("this report has not been generated yet")
+	}
+	if _, err := os.Stat(report.LastGeneratedPdfPath); err != nil {
+		if os.IsNotExist(err) {
+			return errors.New("the last generated PDF was moved or deleted")
+		}
+		return err
+	}
+
+	var command *exec.Cmd
+	switch goruntime.GOOS {
+	case "darwin":
+		command = exec.Command("open", report.LastGeneratedPdfPath)
+	case "windows":
+		command = exec.Command("rundll32", "url.dll,FileProtocolHandler", report.LastGeneratedPdfPath)
+	default:
+		command = exec.Command("xdg-open", report.LastGeneratedPdfPath)
+	}
+	return command.Start()
+}
+
 func (a *App) PickDirectory() (string, error) {
 	selected, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Select Project Directory",
@@ -151,6 +231,13 @@ func (a *App) AnalyzeProject(project database.Project) error {
 
 func (a *App) RetrieveAiImages(projectID int64) ([]database.RetrieveAiImagesRow, error) {
 	return a.queries.RetrieveAiImages(a.ctx, projectID)
+}
+
+func (a *App) SaveEditedAnnotations(imageID int64, annotationsJSON string) error {
+	return a.queries.UpdateAiImageEditedAnnotations(a.ctx, database.UpdateAiImageEditedAnnotationsParams{
+		ImageID:               imageID,
+		EditedAnnotationsJson: sql.NullString{String: annotationsJSON, Valid: true},
+	})
 }
 
 func (a *App) GetOriginalImageDataURL(imageID int64) (string, error) {

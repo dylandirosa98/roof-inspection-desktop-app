@@ -84,7 +84,8 @@ SELECT
     images.height AS image_height,
     images.preview_url AS image_preview_url,
     ai_images.id AS ai_image_id,
-    ai_images.annotations_json
+    ai_images.annotations_json,
+    ai_images.edited_annotations_json
 FROM images
 LEFT JOIN ai_images
     ON images.id = ai_images.image_id
@@ -93,13 +94,14 @@ ORDER BY ai_images.id IS NOT NULL DESC, images.id
 `
 
 type RetrieveAiImagesRow struct {
-	ImageID         int64
-	ImagePath       string
-	ImageWidth      sql.NullInt64
-	ImageHeight     sql.NullInt64
-	ImagePreviewUrl sql.NullString
-	AiImageID       sql.NullInt64
-	AnnotationsJson sql.NullString
+	ImageID               int64
+	ImagePath             string
+	ImageWidth            sql.NullInt64
+	ImageHeight           sql.NullInt64
+	ImagePreviewUrl       sql.NullString
+	AiImageID             sql.NullInt64
+	AnnotationsJson       sql.NullString
+	EditedAnnotationsJson sql.NullString
 }
 
 func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]RetrieveAiImagesRow, error) {
@@ -119,6 +121,7 @@ func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]Retr
 			&i.ImagePreviewUrl,
 			&i.AiImageID,
 			&i.AnnotationsJson,
+			&i.EditedAnnotationsJson,
 		); err != nil {
 			return nil, err
 		}
@@ -203,4 +206,20 @@ func (q *Queries) RetrieveImages(ctx context.Context, projectID int64) ([]Retrie
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateAiImageEditedAnnotations = `-- name: UpdateAiImageEditedAnnotations :exec
+UPDATE ai_images
+SET edited_annotations_json = ?
+WHERE image_id = ?
+`
+
+type UpdateAiImageEditedAnnotationsParams struct {
+	EditedAnnotationsJson sql.NullString
+	ImageID               int64
+}
+
+func (q *Queries) UpdateAiImageEditedAnnotations(ctx context.Context, arg UpdateAiImageEditedAnnotationsParams) error {
+	_, err := q.db.ExecContext(ctx, updateAiImageEditedAnnotations, arg.EditedAnnotationsJson, arg.ImageID)
+	return err
 }

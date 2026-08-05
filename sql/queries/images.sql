@@ -17,6 +17,11 @@ INSERT INTO ai_images (image_id, annotations_json)
 VALUES (?, ?)
 RETURNING id, image_id;
 
+-- name: UpdateAiImageEditedAnnotations :exec
+UPDATE ai_images
+SET edited_annotations_json = ?
+WHERE image_id = ?;
+
 -- name: RetrieveAiImages :many
 SELECT
     images.id AS image_id,
@@ -25,7 +30,8 @@ SELECT
     images.height AS image_height,
     images.preview_url AS image_preview_url,
     ai_images.id AS ai_image_id,
-    ai_images.annotations_json
+    ai_images.annotations_json,
+    ai_images.edited_annotations_json
 FROM images
 LEFT JOIN ai_images
     ON images.id = ai_images.image_id

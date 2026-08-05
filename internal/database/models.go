@@ -9,9 +9,10 @@ import (
 )
 
 type AiImage struct {
-	ID              int64
-	ImageID         int64
-	AnnotationsJson sql.NullString
+	ID                    int64
+	ImageID               int64
+	AnnotationsJson       sql.NullString
+	EditedAnnotationsJson sql.NullString
 }
 
 type Image struct {
@@ -24,6 +25,27 @@ type Image struct {
 	DataUrl    sql.NullString
 	PreviewUrl sql.NullString
 	ProjectID  int64
+}
+
+type InspectionReport struct {
+	ID                   int64
+	ProjectID            int64
+	ReportNumber         string
+	ReportTitle          string
+	CustomerName         string
+	PropertyAddress      string
+	CityStateZip         string
+	InspectorName        string
+	InspectionDate       string
+	InsuranceCarrier     string
+	ClaimNumber          string
+	DateOfLoss           string
+	Summary              string
+	Notes                string
+	CreatedAt            string
+	UpdatedAt            string
+	LastGeneratedPdfPath string
+	LastGeneratedAt      string
 }
 
 type Project struct {
