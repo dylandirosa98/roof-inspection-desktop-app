@@ -202,8 +202,14 @@ func (a *App) OpenLastGeneratedInspectionReport(reportID int64) error {
 }
 
 func (a *App) PickDirectory() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
 	selected, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Select Project Directory",
+		Title:                "Select Folder of Roof Photos",
+		DefaultDirectory:     home,
+		CanCreateDirectories: false,
 	})
 	if err != nil {
 		return "", err

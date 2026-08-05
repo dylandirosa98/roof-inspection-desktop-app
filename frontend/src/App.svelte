@@ -23,6 +23,9 @@
   let projects = []
   let isAnalyzing = false
   let analysisError = ''
+  let projectError = ''
+  let isChoosingDirectory = false
+  let isCreatingProject = false
   let visibleImageCount = 20
   let jsonByImageID = {}
   let openJsonImageID = null
@@ -84,12 +87,29 @@
   ))
 
   async function createProject() {
-    const result = await CreateProject(directory, name)
-    project = result
-    projectView = 'photos'
-    resetReportState()
-    await loadProjectImages(result.ID)
-    await getProjects()
+    if (!name.trim()) {
+      projectError = 'Enter a project name.'
+      return
+    }
+    if (!directory) {
+      projectError = 'Choose the folder containing the roof photos.'
+      return
+    }
+
+    isCreatingProject = true
+    projectError = ''
+    try {
+      const result = await CreateProject(directory, name.trim())
+      project = result
+      projectView = 'photos'
+      resetReportState()
+      await loadProjectImages(result.ID)
+      await getProjects()
+    } catch (error) {
+      projectError = errorText(error)
+    } finally {
+      isCreatingProject = false
+    }
   }
 
   function hasImageData(image) {
@@ -496,9 +516,17 @@
   }
 
   async function chooseDirectory() {
-    const selected = await PickDirectory()
-    if (selected) {
-      directory = selected
+    isChoosingDirectory = true
+    projectError = ''
+    try {
+      const selected = await PickDirectory()
+      if (selected) {
+        directory = selected
+      }
+    } catch (error) {
+      projectError = errorText(error)
+    } finally {
+      isChoosingDirectory = false
     }
   }
   async function getProjects() {
@@ -842,13 +870,21 @@
                     id="project-directory"
                     type="text"
                     readonly
-            />
-            <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
+              />
+              <button class="btn" on:click={chooseDirectory} disabled={isChoosingDirectory}>
+                {isChoosingDirectory ? 'Opening...' : 'Choose Folder'}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div class="action-row">
-          <button class="btn" on:click={createProject}>Create Project</button>
+          {#if projectError}
+            <p class="project-error" role="alert">{projectError}</p>
+          {/if}
+
+          <div class="action-row">
+            <button class="btn" on:click={createProject} disabled={isCreatingProject}>
+              {isCreatingProject ? 'Creating...' : 'Create Project'}
+            </button>
         </div>
       </div>
       {/if}
@@ -1587,6 +1623,11 @@
     color: #333333;
   }
 
+  .input-box .btn:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
   .input-box .input {
     border: none;
     border-radius: 3px;
@@ -1970,6 +2011,12 @@
   .action-row {
     display: flex;
     justify-content: center;
+  }
+
+  .project-error {
+    margin: 0;
+    color: #fecaca;
+    text-align: center;
   }
 
   @media (max-width: 760px) {
