@@ -10,7 +10,8 @@ data/
 datasets/
 .venv/
 runs/
-models/
+models/*
+!models/roof-hail-v1.onnx
 yolo*.pt
 .env
 .env.*
@@ -20,3 +21,4 @@ __pycache__/
 .coverage
 .DS_Store
 hail_market_roofing_companies.csv
+testdata/reports/

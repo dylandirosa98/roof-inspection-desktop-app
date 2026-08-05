@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"roof-inspection-desktop-app/internal/analysis"
 	"roof-inspection-desktop-app/internal/database"
+	"strings"
 	"testing"
 )
 
@@ -36,9 +37,16 @@ func TestGenerateCreatesLetterPDFForReviewedImage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	annotations, err := json.Marshal(editedAnnotations{Detections: []analysis.ImageDetection{{
-		BoundingBox: analysis.BoundingBox{Left: 120, Top: 40, Right: 280, Bottom: 160},
-	}}})
+	annotations, err := json.Marshal(editedAnnotations{
+		Detections: []analysis.ImageDetection{{
+			BoundingBox: analysis.BoundingBox{Left: 120, Top: 40, Right: 280, Bottom: 160},
+		}},
+		Notes: "Reviewed impact marks near the center of the roof plane.",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	noDamageAnnotations, err := json.Marshal(editedAnnotations{Notes: "Reviewed with no damage boxes."})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +62,9 @@ func TestGenerateCreatesLetterPDFForReviewedImage(t *testing.T) {
 			ReportNumber:    "SAMPLE-001",
 			ReportTitle:     "Roof Inspection and Photo Documentation Report",
 			PropertyAddress: "123 Example Lane",
-			CityStateZip:    "Exampletown, NJ 00000",
+			PropertyCity:    "Exampletown",
+			PropertyState:   "NJ",
+			PropertyZip:     "00000",
 			InspectionDate:  "2026-08-04",
 			CreatedAt:       "2026-08-04",
 		},
@@ -62,6 +72,10 @@ func TestGenerateCreatesLetterPDFForReviewedImage(t *testing.T) {
 			ImageID:               1,
 			ImagePath:             imagePath,
 			EditedAnnotationsJson: sql.NullString{String: string(annotations), Valid: true},
+		}, {
+			ImageID:               2,
+			ImagePath:             imagePath,
+			EditedAnnotationsJson: sql.NullString{String: string(noDamageAnnotations), Valid: true},
 		}},
 		outputPath,
 		logo,
@@ -69,7 +83,7 @@ func TestGenerateCreatesLetterPDFForReviewedImage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Path != outputPath || result.ImageCount != 1 || result.PageCount != 2 {
+	if result.Path != outputPath || result.ImageCount != 1 || result.PageCount != 1 {
 		t.Fatalf("unexpected result: %+v", result)
 	}
 	info, err := os.Stat(outputPath)
@@ -78,5 +92,41 @@ func TestGenerateCreatesLetterPDFForReviewedImage(t *testing.T) {
 	}
 	if info.Size() == 0 {
 		t.Fatal("generated PDF is empty")
+	}
+
+	longSummaryResult, err := Generate(
+		database.InspectionReport{
+			ID:              2,
+			ProjectID:       1,
+			ReportNumber:    "SAMPLE-002",
+			ReportTitle:     "Roof Inspection and Photo Documentation Report",
+			PropertyAddress: "123 Example Lane",
+			PropertyCity:    "Exampletown",
+			PropertyState:   "NJ",
+			PropertyZip:     "00000",
+			InspectionDate:  "2026-08-04",
+			CreatedAt:       "2026-08-04",
+			Summary:         strings.Repeat("Documented inspection finding. ", 18),
+		},
+		[]database.RetrieveReviewedReportImagesRow{{
+			ImageID:               1,
+			ImagePath:             imagePath,
+			EditedAnnotationsJson: sql.NullString{String: string(annotations), Valid: true},
+		}},
+		filepath.Join(tempDir, "long-summary-report.pdf"),
+		logo,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if longSummaryResult.PageCount != 2 {
+		t.Fatalf("expected long summary report to use two pages, got %d", longSummaryResult.PageCount)
+	}
+}
+
+func TestPhotoNoteTruncatesLongNotes(t *testing.T) {
+	note := photoNote(string(make([]rune, 200)))
+	if len([]rune(note)) != 180 {
+		t.Fatalf("expected 180 runes, got %d", len([]rune(note)))
 	}
 }

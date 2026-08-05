@@ -10,6 +10,25 @@ import (
 	"database/sql"
 )
 
+const approveImageReview = `-- name: ApproveImageReview :exec
+UPDATE ai_images
+SET
+    edited_annotations_json = ?,
+    review_approved = 1,
+    reviewed_at = CURRENT_TIMESTAMP
+WHERE image_id = ?
+`
+
+type ApproveImageReviewParams struct {
+	EditedAnnotationsJson sql.NullString
+	ImageID               int64
+}
+
+func (q *Queries) ApproveImageReview(ctx context.Context, arg ApproveImageReviewParams) error {
+	_, err := q.db.ExecContext(ctx, approveImageReview, arg.EditedAnnotationsJson, arg.ImageID)
+	return err
+}
+
 const createAiImage = `-- name: CreateAiImage :one
 INSERT INTO ai_images (image_id, annotations_json)
 VALUES (?, ?)
@@ -85,7 +104,9 @@ SELECT
     images.preview_url AS image_preview_url,
     ai_images.id AS ai_image_id,
     ai_images.annotations_json,
-    ai_images.edited_annotations_json
+    ai_images.edited_annotations_json,
+    ai_images.review_approved,
+    ai_images.reviewed_at
 FROM images
 LEFT JOIN ai_images
     ON images.id = ai_images.image_id
@@ -102,6 +123,8 @@ type RetrieveAiImagesRow struct {
 	AiImageID             sql.NullInt64
 	AnnotationsJson       sql.NullString
 	EditedAnnotationsJson sql.NullString
+	ReviewApproved        sql.NullInt64
+	ReviewedAt            sql.NullString
 }
 
 func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]RetrieveAiImagesRow, error) {
@@ -122,6 +145,8 @@ func (q *Queries) RetrieveAiImages(ctx context.Context, projectID int64) ([]Retr
 			&i.AiImageID,
 			&i.AnnotationsJson,
 			&i.EditedAnnotationsJson,
+			&i.ReviewApproved,
+			&i.ReviewedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -210,7 +235,10 @@ func (q *Queries) RetrieveImages(ctx context.Context, projectID int64) ([]Retrie
 
 const updateAiImageEditedAnnotations = `-- name: UpdateAiImageEditedAnnotations :exec
 UPDATE ai_images
-SET edited_annotations_json = ?
+SET
+    edited_annotations_json = ?,
+    review_approved = 0,
+    reviewed_at = NULL
 WHERE image_id = ?
 `
 

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Roof Inspection and Photo Documentation Report</title>
+  <style>
+    @page { size: letter; margin: .42in; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #1f2933; font: 10pt Arial, Helvetica, sans-serif; }
+    .page { min-height: 10.15in; position: relative; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .topbar { height: 7px; background: #c81922; margin-bottom: 18px; }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
+    .brand { width: 205px; max-height: 85px; object-fit: contain; object-position: left top; }
+    .title-block { width: 470px; text-align: center; }
+    .title-block h1 { margin: 0; color: #20242a; font-size: 21pt; letter-spacing: -.4px; }
+    .title-block p { margin: 5px 0 0; color: #59636e; font-size: 9pt; }
+    .rule { border: 0; border-top: 1px solid #cfd5db; margin: 15px 0; }
+    .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; }
+    .meta-card { border-left: 3px solid #c81922; padding: 5px 8px; background: #f4f6f8; }
+    .label { display: block; color: #68737e; font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .value { display: block; margin-top: 3px; color: #1f2933; font-size: 10pt; font-weight: 700; }
+    h2 { margin: 19px 0 8px; border-bottom: 2px solid #c81922; padding-bottom: 5px; color: #20242a; font-size: 12pt; }
+    .summary { border: 1px solid #d8dee4; padding: 12px; background: #fbfcfd; line-height: 1.5; }
+    .summary p { margin: 0; }
+    .summary strong { color: #a71019; }
+    .note-grid { display: grid; grid-template-columns: 1fr; }
+    .findings { min-height: 90px; border: 1px solid #d8dee4; padding: 10px; background: #fbfcfd; line-height: 1.5; }
+    .footer { position: absolute; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between; border-top: 1px solid #cfd5db; padding-top: 7px; color: #68737e; font-size: 7.5pt; }
+    .photos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .photo-card { break-inside: avoid; border: 1px solid #d1d8df; background: #fff; }
+    .photo { position: relative; height: 3.05in; overflow: hidden; background: linear-gradient(135deg, #76818d, #c8ced3 45%, #8e9aa4); }
+    .photo:before { content: "Selected inspection photo"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,.9); font-size: 13pt; font-weight: 700; }
+    .annotation { position: absolute; top: 27%; left: 20%; width: 42%; height: 34%; border: 3px solid #d42029; background: rgba(200,25,34,.08); }
+    .annotation-label { position: absolute; top: calc(27% - 20px); left: 20%; padding: 3px 6px; background: #c81922; color: #fff; font-size: 7.5pt; font-weight: 700; }
+    .caption { padding: 9px 10px 10px; }
+    .caption strong { display: block; color: #20242a; font-size: 9pt; }
+    .caption span { display: block; margin-top: 3px; color: #59636e; font-size: 8pt; line-height: 1.35; }
+    .disclaimer { margin-top: 17px; border: 1px solid #e1c4c6; padding: 9px; background: #fdf7f7; color: #5c3e42; font-size: 7.8pt; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="topbar"></div>
+    <header class="header">
+      <img class="brand" src="../frontend/src/assets/images/spartan-exteriors-logo.png" alt="Spartan Exteriors">
+      <div class="title-block"><h1>Roof Inspection and<br>Photo Documentation Report</h1><p>Sample layout - report metadata and photos are placeholders</p></div>
+    </header>
+    <hr class="rule">
+    <div class="meta">
+      <div class="meta-card"><span class="label">Report Number</span><span class="value">SAMPLE-2026-001</span></div>
+      <div class="meta-card"><span class="label">Report Generated</span><span class="value">July 29, 2026</span></div>
+      <div class="meta-card"><span class="label">Property</span><span class="value">123 Example Lane, Exampletown, NJ 00000</span></div>
+      <div class="meta-card"><span class="label">Inspection Date</span><span class="value">July 28, 2026</span></div>
+      <div class="meta-card"><span class="label">Customer / Contact</span><span class="value">Customer name or contact</span></div>
+      <div class="meta-card"><span class="label">Inspector</span><span class="value">Inspector name</span></div>
+      <div class="meta-card"><span class="label">Insurance Carrier</span><span class="value">Optional carrier name</span></div>
+      <div class="meta-card"><span class="label">Claim Number</span><span class="value">Optional claim number</span></div>
+    </div>
+    <h2>Inspection Summary</h2>
+    <div class="summary"><p><strong>Summary:</strong> Add a concise factual description of the inspection scope, imagery reviewed, and documented observations. This section should describe evidence only and avoid coverage, causation, repair-cost, or claim-approval conclusions.</p></div>
+    <h2>Documented Findings and Review Notes</h2>
+    <div class="note-grid">
+      <div class="findings"><span class="label">Inspector Notes</span><p>Insert factual notes from the inspection. Reference photo numbers where useful.</p></div>
+    </div>
+    <div class="disclaimer">Prepared by Spartan Exteriors to document observed roof conditions and inspection photographs.</div>
+    <footer class="footer"><span>Spartan Exteriors | Roof Inspection and Photo Documentation</span><span>Page 1 of 2</span></footer>
+  </section>
+
+  <section class="page">
+    <div class="topbar"></div>
+    <header class="header"><img class="brand" src="../frontend/src/assets/images/spartan-exteriors-logo.png" alt="Spartan Exteriors"><div class="title-block"><h1>Photo Documentation</h1><p>SAMPLE-2026-001 | 123 Example Lane</p></div></header>
+    <h2>Selected Inspection Images</h2>
+    <div class="photos">
+      <article class="photo-card"><div class="photo"><div class="annotation"></div><div class="annotation-label">Reviewed area of interest</div></div><div class="caption"><strong>Photo 1</strong><span>Inspection documentation.</span></div></article>
+      <article class="photo-card"><div class="photo"><div class="annotation"></div><div class="annotation-label">Reviewed area of interest</div></div><div class="caption"><strong>Photo 2</strong><span>Inspection documentation.</span></div></article>
+      <article class="photo-card"><div class="photo"><div class="annotation"></div><div class="annotation-label">Reviewed area of interest</div></div><div class="caption"><strong>Photo 3</strong><span>Inspection documentation.</span></div></article>
+      <article class="photo-card"><div class="photo"><div class="annotation"></div><div class="annotation-label">Reviewed area of interest</div></div><div class="caption"><strong>Photo 4</strong><span>Inspection documentation.</span></div></article>
+    </div>
+    <footer class="footer"><span>Spartan Exteriors | Roof Inspection and Photo Documentation</span><span>Page 2 of 2</span></footer>
+  </section>
+</body>
+</html>

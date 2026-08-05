@@ -17,6 +17,7 @@ import (
 	inspectionreports "roof-inspection-desktop-app/internal/inspection-reports"
 	goruntime "runtime"
 	"strings"
+	"time"
 
 	"github.com/disintegration/imaging"
 	_ "github.com/mattn/go-sqlite3"
@@ -132,8 +133,13 @@ func (a *App) GenerateInspectionReport(reportID int64, outputPath string) (inspe
 	if err != nil {
 		return inspectionreports.Result{}, err
 	}
+	eastern, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return inspectionreports.Result{}, err
+	}
 	if err := a.queries.UpdateInspectionReportOutput(a.ctx, database.UpdateInspectionReportOutputParams{
 		LastGeneratedPdfPath: outputPath,
+		LastGeneratedAt:      time.Now().In(eastern).Format("2006-01-02 03:04 PM MST"),
 		ID:                   reportID,
 	}); err != nil {
 		return inspectionreports.Result{}, err
@@ -235,6 +241,13 @@ func (a *App) RetrieveAiImages(projectID int64) ([]database.RetrieveAiImagesRow,
 
 func (a *App) SaveEditedAnnotations(imageID int64, annotationsJSON string) error {
 	return a.queries.UpdateAiImageEditedAnnotations(a.ctx, database.UpdateAiImageEditedAnnotationsParams{
+		ImageID:               imageID,
+		EditedAnnotationsJson: sql.NullString{String: annotationsJSON, Valid: true},
+	})
+}
+
+func (a *App) ApproveImageReview(imageID int64, annotationsJSON string) error {
+	return a.queries.ApproveImageReview(a.ctx, database.ApproveImageReviewParams{
 		ImageID:               imageID,
 		EditedAnnotationsJson: sql.NullString{String: annotationsJSON, Valid: true},
 	})

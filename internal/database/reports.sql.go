@@ -13,7 +13,7 @@ import (
 const createInspectionReport = `-- name: CreateInspectionReport :one
 INSERT INTO inspection_reports (project_id, report_number)
 VALUES (?, ?)
-RETURNING id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at
+RETURNING id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at, property_city, property_state, property_zip
 `
 
 type CreateInspectionReportParams struct {
@@ -43,12 +43,15 @@ func (q *Queries) CreateInspectionReport(ctx context.Context, arg CreateInspecti
 		&i.UpdatedAt,
 		&i.LastGeneratedPdfPath,
 		&i.LastGeneratedAt,
+		&i.PropertyCity,
+		&i.PropertyState,
+		&i.PropertyZip,
 	)
 	return i, err
 }
 
 const getInspectionReport = `-- name: GetInspectionReport :one
-SELECT id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at
+SELECT id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at, property_city, property_state, property_zip
 FROM inspection_reports
 WHERE id = ?
 `
@@ -75,12 +78,15 @@ func (q *Queries) GetInspectionReport(ctx context.Context, id int64) (Inspection
 		&i.UpdatedAt,
 		&i.LastGeneratedPdfPath,
 		&i.LastGeneratedAt,
+		&i.PropertyCity,
+		&i.PropertyState,
+		&i.PropertyZip,
 	)
 	return i, err
 }
 
 const getInspectionReportByProjectID = `-- name: GetInspectionReportByProjectID :one
-SELECT id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at
+SELECT id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at, property_city, property_state, property_zip
 FROM inspection_reports
 WHERE project_id = ?
 ORDER BY id DESC
@@ -109,6 +115,9 @@ func (q *Queries) GetInspectionReportByProjectID(ctx context.Context, projectID 
 		&i.UpdatedAt,
 		&i.LastGeneratedPdfPath,
 		&i.LastGeneratedAt,
+		&i.PropertyCity,
+		&i.PropertyState,
+		&i.PropertyZip,
 	)
 	return i, err
 }
@@ -128,6 +137,7 @@ WHERE images.project_id = (
 )
 AND ai_images.edited_annotations_json IS NOT NULL
 AND ai_images.edited_annotations_json <> ''
+AND ai_images.review_approved = 1
 ORDER BY images.id
 `
 
@@ -167,7 +177,9 @@ SET
     report_title = ?,
     customer_name = ?,
     property_address = ?,
-    city_state_zip = ?,
+    property_city = ?,
+    property_state = ?,
+    property_zip = ?,
     inspector_name = ?,
     inspection_date = ?,
     insurance_carrier = ?,
@@ -177,7 +189,7 @@ SET
     notes = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
-RETURNING id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at
+RETURNING id, project_id, report_number, report_title, customer_name, property_address, city_state_zip, inspector_name, inspection_date, insurance_carrier, claim_number, date_of_loss, summary, notes, created_at, updated_at, last_generated_pdf_path, last_generated_at, property_city, property_state, property_zip
 `
 
 type UpdateInspectionReportParams struct {
@@ -185,7 +197,9 @@ type UpdateInspectionReportParams struct {
 	ReportTitle      string
 	CustomerName     string
 	PropertyAddress  string
-	CityStateZip     string
+	PropertyCity     string
+	PropertyState    string
+	PropertyZip      string
 	InspectorName    string
 	InspectionDate   string
 	InsuranceCarrier string
@@ -202,7 +216,9 @@ func (q *Queries) UpdateInspectionReport(ctx context.Context, arg UpdateInspecti
 		arg.ReportTitle,
 		arg.CustomerName,
 		arg.PropertyAddress,
-		arg.CityStateZip,
+		arg.PropertyCity,
+		arg.PropertyState,
+		arg.PropertyZip,
 		arg.InspectorName,
 		arg.InspectionDate,
 		arg.InsuranceCarrier,
@@ -232,6 +248,9 @@ func (q *Queries) UpdateInspectionReport(ctx context.Context, arg UpdateInspecti
 		&i.UpdatedAt,
 		&i.LastGeneratedPdfPath,
 		&i.LastGeneratedAt,
+		&i.PropertyCity,
+		&i.PropertyState,
+		&i.PropertyZip,
 	)
 	return i, err
 }
@@ -240,16 +259,17 @@ const updateInspectionReportOutput = `-- name: UpdateInspectionReportOutput :exe
 UPDATE inspection_reports
 SET
     last_generated_pdf_path = ?,
-    last_generated_at = CURRENT_TIMESTAMP
+    last_generated_at = ?
 WHERE id = ?
 `
 
 type UpdateInspectionReportOutputParams struct {
 	LastGeneratedPdfPath string
+	LastGeneratedAt      string
 	ID                   int64
 }
 
 func (q *Queries) UpdateInspectionReportOutput(ctx context.Context, arg UpdateInspectionReportOutputParams) error {
-	_, err := q.db.ExecContext(ctx, updateInspectionReportOutput, arg.LastGeneratedPdfPath, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateInspectionReportOutput, arg.LastGeneratedPdfPath, arg.LastGeneratedAt, arg.ID)
 	return err
 }

@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"roof-inspection-desktop-app/internal/analysis"
 	"roof-inspection-desktop-app/internal/database"
+	"strings"
 
 	"github.com/disintegration/imaging"
 	"github.com/phpdave11/gofpdf"
@@ -35,10 +36,12 @@ type Result struct {
 
 type editedAnnotations struct {
 	Detections []analysis.ImageDetection `json:"detections"`
+	Notes      string                    `json:"notes"`
 }
 
 type reportImage struct {
-	Path string
+	Path  string
+	Notes string
 }
 
 func Generate(report database.InspectionReport, rows []database.RetrieveReviewedReportImagesRow, outputPath string, logo []byte) (Result, error) {
@@ -69,7 +72,7 @@ func Generate(report database.InspectionReport, rows []database.RetrieveReviewed
 		if err := createAnnotatedPreview(row.ImagePath, annotations.Detections, annotatedPath); err != nil {
 			return Result{}, fmt.Errorf("prepare image %d: %w", row.ImageID, err)
 		}
-		images = append(images, reportImage{Path: annotatedPath})
+		images = append(images, reportImage{Path: annotatedPath, Notes: annotations.Notes})
 	}
 	if len(images) == 0 {
 		return Result{}, errors.New("no reviewed damage photos are available for this report")
@@ -84,8 +87,8 @@ func Generate(report database.InspectionReport, rows []database.RetrieveReviewed
 	pdf.SetAutoPageBreak(false, reportMargin)
 	pdf.RegisterImageOptionsReader("spartan-report-logo", gofpdf.ImageOptions{ImageType: "PNG"}, bytes.NewReader(logo))
 
-	renderSummaryPage(pdf, report)
-	renderPhotoPages(pdf, report, images)
+	firstPageImageCount := renderSummaryPage(pdf, report, images)
+	renderPhotoPages(pdf, report, images[firstPageImageCount:], firstPageImageCount)
 
 	if err := pdf.OutputFileAndClose(outputPath); err != nil {
 		return Result{}, err
@@ -162,13 +165,13 @@ func clamp(value, minimum, maximum int) int {
 	return min(max(value, minimum), maximum)
 }
 
-func renderSummaryPage(pdf *gofpdf.Fpdf, report database.InspectionReport) {
+func renderSummaryPage(pdf *gofpdf.Fpdf, report database.InspectionReport, images []reportImage) int {
 	pdf.AddPage()
 	renderHeader(pdf, report, report.ReportTitle)
 
 	metadata := [][2]string{
 		{"Report Number", report.ReportNumber},
-		{"Property", joinAddress(report.PropertyAddress, report.CityStateZip)},
+		{"Property", formatPropertyAddress(report)},
 		{"Inspection Date", report.InspectionDate},
 		{"Date of Loss", report.DateOfLoss},
 		{"Customer / Contact", report.CustomerName},
@@ -178,9 +181,23 @@ func renderSummaryPage(pdf *gofpdf.Fpdf, report database.InspectionReport) {
 	}
 	renderMetadata(pdf, metadata)
 	renderSectionTitle(pdf, "Inspection Summary")
-	renderTextBox(pdf, report.Summary, 31)
-	renderSectionTitle(pdf, "Documented Findings and Review Notes")
-	renderTextBox(pdf, report.Notes, 38)
+	summaryHeight := textBoxHeight(pdf, report.Summary, 18)
+	renderTextBox(pdf, report.Summary, summaryHeight)
+
+	firstPageImageCount := 0
+	const firstPageCardHeight = 88.0
+	photoStartY := pdf.GetY() + 6
+	if len(images) > 0 && photoStartY+firstPageCardHeight <= 240 {
+		pdf.SetXY(reportMargin, pdf.GetY())
+		pdf.SetTextColor(32, 36, 42)
+		pdf.SetFont("Arial", "B", 9)
+		pdf.CellFormat(reportContentWidth, 5, "Approved Damage Photos", "", 0, "L", false, 0, "")
+		for index := 0; index < min(2, len(images)); index++ {
+			x := reportMargin + float64(index)*99
+			renderPhotoCard(pdf, images[index], index+1, x, photoStartY, firstPageCardHeight, 66)
+			firstPageImageCount++
+		}
+	}
 
 	pdf.SetY(244)
 	pdf.SetFillColor(253, 247, 247)
@@ -191,9 +208,10 @@ func renderSummaryPage(pdf *gofpdf.Fpdf, report database.InspectionReport) {
 	pdf.SetFont("Arial", "", 8)
 	pdf.MultiCell(reportContentWidth-6, 3.7, "Prepared by Spartan Exteriors to document observed roof conditions and inspection photographs.", "", "L", false)
 	renderFooter(pdf)
+	return firstPageImageCount
 }
 
-func renderPhotoPages(pdf *gofpdf.Fpdf, report database.InspectionReport, images []reportImage) {
+func renderPhotoPages(pdf *gofpdf.Fpdf, report database.InspectionReport, images []reportImage, imageNumberOffset int) {
 	for index := 0; index < len(images); index += 4 {
 		pdf.AddPage()
 		renderHeader(pdf, report, "Photo Documentation")
@@ -203,33 +221,50 @@ func renderPhotoPages(pdf *gofpdf.Fpdf, report database.InspectionReport, images
 			column := photoIndex % 2
 			row := photoIndex / 2
 			x := reportMargin + float64(column)*99
-			y := 56 + float64(row)*96
-			pdf.SetDrawColor(209, 216, 223)
-			pdf.Rect(x, y, 93, 90, "D")
-			pdf.ImageOptions(images[index+photoIndex].Path, x+5, y, 83, 83, false, gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
-			pdf.SetXY(x+3, y+84)
-			pdf.SetTextColor(32, 36, 42)
-			pdf.SetFont("Arial", "B", 9)
-			pdf.CellFormat(87, 5, fmt.Sprintf("Photo %d", index+photoIndex+1), "", 0, "L", false, 0, "")
+			y := 60 + float64(row)*101
+			renderPhotoCard(pdf, images[index+photoIndex], imageNumberOffset+index+photoIndex+1, x, y, 98, 76)
 		}
 		renderFooter(pdf)
 	}
 }
 
+func renderPhotoCard(pdf *gofpdf.Fpdf, image reportImage, number int, x, y, height, imageSize float64) {
+	pdf.SetDrawColor(209, 216, 223)
+	pdf.Rect(x, y, 93, height, "D")
+	pdf.ImageOptions(image.Path, x+(93-imageSize)/2, y, imageSize, imageSize, false, gofpdf.ImageOptions{ImageType: "JPG"}, 0, "")
+	pdf.SetXY(x+3, y+imageSize+2)
+	pdf.SetTextColor(32, 36, 42)
+	pdf.SetFont("Arial", "B", 9)
+	pdf.CellFormat(87, 5, fmt.Sprintf("Photo %d", number), "", 0, "L", false, 0, "")
+	if note := photoNote(image.Notes); note != "" {
+		pdf.SetXY(x+3, y+imageSize+7)
+		pdf.SetTextColor(89, 99, 110)
+		pdf.SetFont("Arial", "", 7.5)
+		pdf.MultiCell(87, 3.2, note, "", "L", false)
+	}
+}
+
 func renderHeader(pdf *gofpdf.Fpdf, report database.InspectionReport, title string) {
+	const titleBlockX = 80.0
+	const titleBlockWidth = 110.0
+
 	pdf.SetFillColor(200, 25, 34)
 	pdf.Rect(reportMargin, reportMargin, reportContentWidth, 2, "F")
 	pdf.ImageOptions("spartan-report-logo", reportMargin, 15, 30, 0, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
 	pdf.SetTextColor(32, 36, 42)
 	pdf.SetFont("Arial", "B", 18)
-	pdf.SetXY(65, 17)
-	pdf.MultiCell(140, 7, title, "", "R", false)
+	if title == "Roof Inspection and Photo Documentation Report" {
+		title = "Roof Inspection and\nPhoto Documentation Report"
+	}
+	pdf.SetXY(titleBlockX, 16)
+	pdf.MultiCell(titleBlockWidth, 8, title, "", "C", false)
 	pdf.SetTextColor(89, 99, 110)
 	pdf.SetFont("Arial", "", 8)
-	pdf.SetXY(65, 34)
-	pdf.CellFormat(140, 4, fmt.Sprintf("%s | %s", report.ReportNumber, joinAddress(report.PropertyAddress, report.CityStateZip)), "", 0, "R", false, 0, "")
+	pdf.SetXY(65, 35)
+	pdf.CellFormat(140, 4, fmt.Sprintf("%s | %s", report.ReportNumber, formatPropertyAddress(report)), "", 0, "R", false, 0, "")
 	pdf.SetDrawColor(207, 213, 219)
 	pdf.Line(reportMargin, 46, reportPageWidth-reportMargin, 46)
+	pdf.SetXY(reportMargin, 49)
 }
 
 func renderMetadata(pdf *gofpdf.Fpdf, entries [][2]string) {
@@ -255,6 +290,7 @@ func renderMetadata(pdf *gofpdf.Fpdf, entries [][2]string) {
 }
 
 func renderSectionTitle(pdf *gofpdf.Fpdf, title string) {
+	pdf.SetX(reportMargin)
 	pdf.SetTextColor(32, 36, 42)
 	pdf.SetFont("Arial", "B", 12)
 	pdf.CellFormat(reportContentWidth, 7, title, "", 1, "L", false, 0, "")
@@ -280,6 +316,15 @@ func renderTextBox(pdf *gofpdf.Fpdf, value string, height float64) {
 	pdf.SetY(y + height + 5)
 }
 
+func textBoxHeight(pdf *gofpdf.Fpdf, value string, minimum float64) float64 {
+	if value == "" {
+		value = "No summary provided."
+	}
+	pdf.SetFont("Arial", "", 9)
+	lineCount := len(pdf.SplitText(value, reportContentWidth-6))
+	return max(minimum, float64(lineCount)*4.5+6)
+}
+
 func renderFooter(pdf *gofpdf.Fpdf) {
 	pdf.SetDrawColor(207, 213, 219)
 	pdf.Line(reportMargin, 266, reportPageWidth-reportMargin, 266)
@@ -290,12 +335,38 @@ func renderFooter(pdf *gofpdf.Fpdf) {
 	pdf.CellFormat(75, 4, fmt.Sprintf("Page %d", pdf.PageNo()), "", 0, "R", false, 0, "")
 }
 
-func joinAddress(address, cityStateZIP string) string {
-	if address == "" {
-		return cityStateZIP
+func formatPropertyAddress(report database.InspectionReport) string {
+	locality := strings.TrimSpace(strings.Join(nonEmptyStrings(report.PropertyCity, report.PropertyState), " "))
+	if report.PropertyZip != "" {
+		locality = strings.TrimSpace(locality + " " + report.PropertyZip)
 	}
-	if cityStateZIP == "" {
-		return address
+	if locality == "" {
+		locality = report.CityStateZip
 	}
-	return address + ", " + cityStateZIP
+	if report.PropertyAddress == "" {
+		return locality
+	}
+	if locality == "" {
+		return report.PropertyAddress
+	}
+	return report.PropertyAddress + ", " + locality
+}
+
+func nonEmptyStrings(values ...string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value = strings.TrimSpace(value); value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func photoNote(note string) string {
+	note = strings.TrimSpace(note)
+	runes := []rune(note)
+	if len(runes) <= 180 {
+		return note
+	}
+	return string(runes[:177]) + "..."
 }

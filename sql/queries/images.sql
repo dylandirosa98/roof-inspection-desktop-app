@@ -19,7 +19,18 @@ RETURNING id, image_id;
 
 -- name: UpdateAiImageEditedAnnotations :exec
 UPDATE ai_images
-SET edited_annotations_json = ?
+SET
+    edited_annotations_json = ?,
+    review_approved = 0,
+    reviewed_at = NULL
+WHERE image_id = ?;
+
+-- name: ApproveImageReview :exec
+UPDATE ai_images
+SET
+    edited_annotations_json = ?,
+    review_approved = 1,
+    reviewed_at = CURRENT_TIMESTAMP
 WHERE image_id = ?;
 
 -- name: RetrieveAiImages :many
@@ -31,7 +42,9 @@ SELECT
     images.preview_url AS image_preview_url,
     ai_images.id AS ai_image_id,
     ai_images.annotations_json,
-    ai_images.edited_annotations_json
+    ai_images.edited_annotations_json,
+    ai_images.review_approved,
+    ai_images.reviewed_at
 FROM images
 LEFT JOIN ai_images
     ON images.id = ai_images.image_id

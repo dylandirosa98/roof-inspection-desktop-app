@@ -22,7 +22,9 @@ SET
     report_title = ?,
     customer_name = ?,
     property_address = ?,
-    city_state_zip = ?,
+    property_city = ?,
+    property_state = ?,
+    property_zip = ?,
     inspector_name = ?,
     inspection_date = ?,
     insurance_carrier = ?,
@@ -38,7 +40,7 @@ RETURNING *;
 UPDATE inspection_reports
 SET
     last_generated_pdf_path = ?,
-    last_generated_at = CURRENT_TIMESTAMP
+    last_generated_at = ?
 WHERE id = ?;
 
 -- name: RetrieveReviewedReportImages :many
@@ -56,4 +58,5 @@ WHERE images.project_id = (
 )
 AND ai_images.edited_annotations_json IS NOT NULL
 AND ai_images.edited_annotations_json <> ''
+AND ai_images.review_approved = 1
 ORDER BY images.id;

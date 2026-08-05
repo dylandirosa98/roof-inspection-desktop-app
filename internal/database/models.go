@@ -13,6 +13,8 @@ type AiImage struct {
 	ImageID               int64
 	AnnotationsJson       sql.NullString
 	EditedAnnotationsJson sql.NullString
+	ReviewApproved        int64
+	ReviewedAt            sql.NullString
 }
 
 type Image struct {
@@ -46,6 +48,9 @@ type InspectionReport struct {
 	UpdatedAt            string
 	LastGeneratedPdfPath string
 	LastGeneratedAt      string
+	PropertyCity         string
+	PropertyState        string
+	PropertyZip          string
 }
 
 type Project struct {

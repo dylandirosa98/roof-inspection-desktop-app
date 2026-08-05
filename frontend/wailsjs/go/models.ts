@@ -1,5 +1,5 @@
 export namespace analysis {
-	
+
 	export class Detection {
 	    Class: string;
 	    Confidence: number;
@@ -7,11 +7,11 @@ export namespace analysis {
 	    Y: number;
 	    Width: number;
 	    Height: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new Detection(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.Class = source["Class"];
@@ -27,11 +27,11 @@ export namespace analysis {
 	    Left: number;
 	    Right: number;
 	    Bottom: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new BoundingBox(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.Top = source["Top"];
@@ -43,17 +43,17 @@ export namespace analysis {
 	export class ImageDetection {
 	    BoundingBox: BoundingBox;
 	    Detection: Detection;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new ImageDetection(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.BoundingBox = this.convertValues(source["BoundingBox"], BoundingBox);
 	        this.Detection = this.convertValues(source["Detection"], Detection);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -75,17 +75,17 @@ export namespace analysis {
 	export class AnalysisResult {
 	    OriginalImageBoxes: ImageDetection[];
 	    ModelImageBoxes: ImageDetection[];
-	
+
 	    static createFrom(source: any = {}) {
 	        return new AnalysisResult(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.OriginalImageBoxes = this.convertValues(source["OriginalImageBoxes"], ImageDetection);
 	        this.ModelImageBoxes = this.convertValues(source["ModelImageBoxes"], ImageDetection);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -104,22 +104,74 @@ export namespace analysis {
 		    return a;
 		}
 	}
-	
-	
+
+
 
 }
 
 export namespace database {
-	
+
+	export class InspectionReport {
+	    ID: number;
+	    ProjectID: number;
+	    ReportNumber: string;
+	    ReportTitle: string;
+	    CustomerName: string;
+	    PropertyAddress: string;
+	    CityStateZip: string;
+	    InspectorName: string;
+	    InspectionDate: string;
+	    InsuranceCarrier: string;
+	    ClaimNumber: string;
+	    DateOfLoss: string;
+	    Summary: string;
+	    Notes: string;
+	    CreatedAt: string;
+	    UpdatedAt: string;
+	    LastGeneratedPdfPath: string;
+	    LastGeneratedAt: string;
+	    PropertyCity: string;
+	    PropertyState: string;
+	    PropertyZip: string;
+
+	    static createFrom(source: any = {}) {
+	        return new InspectionReport(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
+	        this.ProjectID = source["ProjectID"];
+	        this.ReportNumber = source["ReportNumber"];
+	        this.ReportTitle = source["ReportTitle"];
+	        this.CustomerName = source["CustomerName"];
+	        this.PropertyAddress = source["PropertyAddress"];
+	        this.CityStateZip = source["CityStateZip"];
+	        this.InspectorName = source["InspectorName"];
+	        this.InspectionDate = source["InspectionDate"];
+	        this.InsuranceCarrier = source["InsuranceCarrier"];
+	        this.ClaimNumber = source["ClaimNumber"];
+	        this.DateOfLoss = source["DateOfLoss"];
+	        this.Summary = source["Summary"];
+	        this.Notes = source["Notes"];
+	        this.CreatedAt = source["CreatedAt"];
+	        this.UpdatedAt = source["UpdatedAt"];
+	        this.LastGeneratedPdfPath = source["LastGeneratedPdfPath"];
+	        this.LastGeneratedAt = source["LastGeneratedAt"];
+	        this.PropertyCity = source["PropertyCity"];
+	        this.PropertyState = source["PropertyState"];
+	        this.PropertyZip = source["PropertyZip"];
+	    }
+	}
 	export class Project {
 	    ID: number;
 	    Name: string;
 	    Directory: string;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new Project(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ID = source["ID"];
@@ -135,11 +187,14 @@ export namespace database {
 	    ImagePreviewUrl: sql.NullString;
 	    AiImageID: sql.NullInt64;
 	    AnnotationsJson: sql.NullString;
-	
+	    EditedAnnotationsJson: sql.NullString;
+	    ReviewApproved: sql.NullInt64;
+	    ReviewedAt: sql.NullString;
+
 	    static createFrom(source: any = {}) {
 	        return new RetrieveAiImagesRow(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ImageID = source["ImageID"];
@@ -149,8 +204,11 @@ export namespace database {
 	        this.ImagePreviewUrl = this.convertValues(source["ImagePreviewUrl"], sql.NullString);
 	        this.AiImageID = this.convertValues(source["AiImageID"], sql.NullInt64);
 	        this.AnnotationsJson = this.convertValues(source["AnnotationsJson"], sql.NullString);
+	        this.EditedAnnotationsJson = this.convertValues(source["EditedAnnotationsJson"], sql.NullString);
+	        this.ReviewApproved = this.convertValues(source["ReviewApproved"], sql.NullInt64);
+	        this.ReviewedAt = this.convertValues(source["ReviewedAt"], sql.NullString);
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -179,11 +237,11 @@ export namespace database {
 	    PreviewUrl: sql.NullString;
 	    ID: number;
 	    ProjectID: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new RetrieveImagesRow(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.Width = this.convertValues(source["Width"], sql.NullInt64);
@@ -196,7 +254,7 @@ export namespace database {
 	        this.ID = source["ID"];
 	        this.ProjectID = source["ProjectID"];
 	    }
-	
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -220,11 +278,11 @@ export namespace database {
 	    Name: string;
 	    Directory: string;
 	    ImageCount: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new RetrieveProjectsRow(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ID = source["ID"];
@@ -233,19 +291,80 @@ export namespace database {
 	        this.ImageCount = source["ImageCount"];
 	    }
 	}
+	export class UpdateInspectionReportParams {
+	    ReportNumber: string;
+	    ReportTitle: string;
+	    CustomerName: string;
+	    PropertyAddress: string;
+	    PropertyCity: string;
+	    PropertyState: string;
+	    PropertyZip: string;
+	    InspectorName: string;
+	    InspectionDate: string;
+	    InsuranceCarrier: string;
+	    ClaimNumber: string;
+	    DateOfLoss: string;
+	    Summary: string;
+	    Notes: string;
+	    ID: number;
+
+	    static createFrom(source: any = {}) {
+	        return new UpdateInspectionReportParams(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ReportNumber = source["ReportNumber"];
+	        this.ReportTitle = source["ReportTitle"];
+	        this.CustomerName = source["CustomerName"];
+	        this.PropertyAddress = source["PropertyAddress"];
+	        this.PropertyCity = source["PropertyCity"];
+	        this.PropertyState = source["PropertyState"];
+	        this.PropertyZip = source["PropertyZip"];
+	        this.InspectorName = source["InspectorName"];
+	        this.InspectionDate = source["InspectionDate"];
+	        this.InsuranceCarrier = source["InsuranceCarrier"];
+	        this.ClaimNumber = source["ClaimNumber"];
+	        this.DateOfLoss = source["DateOfLoss"];
+	        this.Summary = source["Summary"];
+	        this.Notes = source["Notes"];
+	        this.ID = source["ID"];
+	    }
+	}
+
+}
+
+export namespace inspection_reports {
+
+	export class Result {
+	    Path: string;
+	    PageCount: number;
+	    ImageCount: number;
+
+	    static createFrom(source: any = {}) {
+	        return new Result(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Path = source["Path"];
+	        this.PageCount = source["PageCount"];
+	        this.ImageCount = source["ImageCount"];
+	    }
+	}
 
 }
 
 export namespace sql {
-	
+
 	export class NullInt64 {
 	    Int64: number;
 	    Valid: boolean;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new NullInt64(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.Int64 = source["Int64"];
@@ -255,11 +374,11 @@ export namespace sql {
 	export class NullString {
 	    String: string;
 	    Valid: boolean;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new NullString(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.String = source["String"];

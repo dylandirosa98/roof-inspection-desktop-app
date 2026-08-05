@@ -10,8 +10,24 @@ export function AnalyzeProject(arg1) {
   return window['go']['main']['App']['AnalyzeProject'](arg1);
 }
 
+export function ApproveImageReview(arg1, arg2) {
+  return window['go']['main']['App']['ApproveImageReview'](arg1, arg2);
+}
+
+export function CreateInspectionReport(arg1, arg2) {
+  return window['go']['main']['App']['CreateInspectionReport'](arg1, arg2);
+}
+
 export function CreateProject(arg1, arg2) {
   return window['go']['main']['App']['CreateProject'](arg1, arg2);
+}
+
+export function GenerateInspectionReport(arg1, arg2) {
+  return window['go']['main']['App']['GenerateInspectionReport'](arg1, arg2);
+}
+
+export function GetInspectionReportByProjectID(arg1) {
+  return window['go']['main']['App']['GetInspectionReportByProjectID'](arg1);
 }
 
 export function GetOriginalImageDataURL(arg1) {
@@ -26,6 +42,10 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function OpenLastGeneratedInspectionReport(arg1) {
+  return window['go']['main']['App']['OpenLastGeneratedInspectionReport'](arg1);
+}
+
 export function PickDirectory() {
   return window['go']['main']['App']['PickDirectory']();
 }
@@ -36,4 +56,12 @@ export function RetrieveAiImages(arg1) {
 
 export function RetrieveProject(arg1) {
   return window['go']['main']['App']['RetrieveProject'](arg1);
+}
+
+export function SaveEditedAnnotations(arg1, arg2) {
+  return window['go']['main']['App']['SaveEditedAnnotations'](arg1, arg2);
+}
+
+export function UpdateInspectionReport(arg1) {
+  return window['go']['main']['App']['UpdateInspectionReport'](arg1);
 }
