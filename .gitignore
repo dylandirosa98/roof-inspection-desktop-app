@@ -21,4 +21,4 @@ __pycache__/
 .coverage
 .DS_Store
 hail_market_roofing_companies.csv
-testdata/reports/
+reports/
