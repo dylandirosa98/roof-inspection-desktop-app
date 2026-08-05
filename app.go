@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"roof-inspection-desktop-app/internal/analysis"
 	"roof-inspection-desktop-app/internal/database"
 	"roof-inspection-desktop-app/internal/inspection"
@@ -41,7 +42,11 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	db, err := sql.Open("sqlite3", "./data/app.db")
+	databasePath, err := appDatabasePath()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := sql.Open("sqlite3", databasePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,10 +64,31 @@ func runMigrations(db *sql.DB) error {
 	if err := goose.SetDialect("sqlite3"); err != nil {
 		return err
 	}
+	goose.SetBaseFS(migrations)
+	defer goose.SetBaseFS(nil)
 	if err := goose.Up(db, "sql/schema"); err != nil {
 		return err
 	}
 	return nil
+}
+
+func appDatabasePath() (string, error) {
+	if goruntime.GOOS != "windows" {
+		if err := os.MkdirAll("data", 0o755); err != nil {
+			return "", err
+		}
+		return filepath.Join("data", "app.db"), nil
+	}
+
+	localAppData := os.Getenv("LOCALAPPDATA")
+	if localAppData == "" {
+		return "", errors.New("LOCALAPPDATA is unavailable")
+	}
+	directory := filepath.Join(localAppData, "Spartan Roof Inspection")
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return "", err
+	}
+	return filepath.Join(directory, "app.db"), nil
 }
 
 // Greet returns a greeting for the given name

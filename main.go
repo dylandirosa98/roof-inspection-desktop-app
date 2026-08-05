@@ -14,6 +14,9 @@ var assets embed.FS
 //go:embed frontend/src/assets/images/spartan-exteriors-logo.png
 var reportLogo []byte
 
+//go:embed sql/schema/*.sql
+var migrations embed.FS
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()

@@ -3,6 +3,7 @@ set -euo pipefail
 
 app_id="roof-inspection-desktop-app"
 app_name="Spartan Roof Inspection"
+app_binary="spartan-roof-inspection"
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 install_dir="$data_home/$app_id"
@@ -19,7 +20,7 @@ cd "$project_root"
 wails build
 
 mkdir -p "$install_dir/data" "$install_dir/models" "$install_dir/runtime" "$install_dir/sql" "$desktop_dir" "$icon_dir"
-install -m 755 "build/bin/$app_id" "$install_dir/$app_id"
+install -m 755 "build/bin/$app_binary" "$install_dir/$app_binary"
 cp -a "models/." "$install_dir/models/"
 cp -a "runtime/." "$install_dir/runtime/"
 cp -a "sql/schema" "$install_dir/sql/"
@@ -30,7 +31,7 @@ cat > "$desktop_dir/$app_id.desktop" <<EOF
 Type=Application
 Name=$app_name
 Comment=AI-assisted roof inspection and claim-support reporting
-Exec=$install_dir/$app_id
+Exec=$install_dir/$app_binary
 Path=$install_dir
 Icon=$app_id
 Terminal=false

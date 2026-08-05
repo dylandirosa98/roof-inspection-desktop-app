@@ -3,6 +3,8 @@ package analysis
 import (
 	"fmt"
 	"roof-inspection-desktop-app/internal/database"
+	"roof-inspection-desktop-app/internal/resources"
+	"runtime"
 
 	ort "github.com/yalue/onnxruntime_go"
 )
@@ -11,7 +13,7 @@ func runModel(inputData []float32) ([]float32, error) {
 	if len(inputData) != 3*640*640 {
 		return nil, fmt.Errorf("Input data length must be 3*640*640")
 	}
-	ort.SetSharedLibraryPath("runtime/linux-amd64/libonnxruntime.so")
+	ort.SetSharedLibraryPath(resources.Path(runtimeLibraryPath()))
 	if err := ort.InitializeEnvironment(); err != nil {
 		return nil, err
 	}
@@ -35,7 +37,7 @@ func runModel(inputData []float32) ([]float32, error) {
 	defer outputTensor.Destroy()
 
 	session, err := ort.NewAdvancedSession(
-		"models/roof-hail-v1.onnx",
+		resources.Path("models", "roof-hail-v1.onnx"),
 		[]string{"images"},
 		[]string{"output0"},
 		[]ort.Value{inputTensor},
@@ -52,6 +54,17 @@ func runModel(inputData []float32) ([]float32, error) {
 	}
 
 	return append([]float32(nil), outputTensor.GetData()...), nil
+}
+
+func runtimeLibraryPath() string {
+	switch runtime.GOOS {
+	case "windows":
+		return "runtime/windows-amd64/onnxruntime.dll"
+	case "darwin":
+		return "runtime/darwin-arm64/libonnxruntime.dylib"
+	default:
+		return "runtime/linux-amd64/libonnxruntime.so"
+	}
 }
 
 func AnalyzeImage(imageRecord database.Image) (AnalysisResult, error) {

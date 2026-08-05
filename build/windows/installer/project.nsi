@@ -88,6 +88,14 @@ Section
 
     !insertmacro wails.files
 
+    SetOutPath "$INSTDIR\models"
+    File "..\..\..\models\roof-hail-v1.onnx"
+
+    SetOutPath "$INSTDIR\runtime\windows-amd64"
+    File /r "..\..\..\runtime\windows-amd64\*.*"
+
+    SetOutPath $INSTDIR
+
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
     CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
