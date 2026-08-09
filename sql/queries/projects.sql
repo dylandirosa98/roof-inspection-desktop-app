@@ -10,3 +10,7 @@ SELECT id, name, directory,(
         WHERE images.project_id = projects.id
     ) AS image_count
 FROM projects;
+
+-- name: DeleteProject :exec
+DELETE FROM projects
+WHERE id = ?;

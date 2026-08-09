@@ -14,6 +14,8 @@ export function CreateInspectionReport(arg1:number,arg2:string):Promise<database
 
 export function CreateProject(arg1:string,arg2:string):Promise<database.Project>;
 
+export function DeleteProject(arg1:number):Promise<void>;
+
 export function GenerateInspectionReport(arg1:number,arg2:string):Promise<inspection_reports.Result>;
 
 export function GetInspectionReportByProjectID(arg1:number):Promise<database.InspectionReport>;

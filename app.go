@@ -46,7 +46,7 @@ func (a *App) startup(ctx context.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := sql.Open("sqlite3", databasePath)
+	db, err := openDatabase(databasePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,6 +57,18 @@ func (a *App) startup(ctx context.Context) {
 	}
 	queries := database.New(db)
 	a.queries = queries
+}
+
+func openDatabase(path string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", path+"?_foreign_keys=on")
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return db, nil
 }
 
 // migrations function
@@ -119,6 +131,13 @@ func (a *App) GetProjects() []database.RetrieveProjectsRow {
 		return nil
 	}
 	return projects
+}
+
+func (a *App) DeleteProject(id int64) error {
+	if id <= 0 {
+		return errors.New("invalid project ID")
+	}
+	return a.queries.DeleteProject(a.ctx, id)
 }
 
 func (a *App) CreateInspectionReport(projectID int64, reportNumber string) (database.InspectionReport, error) {

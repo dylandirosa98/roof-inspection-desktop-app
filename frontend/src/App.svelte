@@ -4,6 +4,7 @@
     ApproveImageReview,
     CreateInspectionReport,
     CreateProject,
+    DeleteProject,
     GenerateInspectionReport,
     GetInspectionReportByProjectID,
     GetOriginalImageDataURL,
@@ -26,6 +27,8 @@
   let projectError = ''
   let isChoosingDirectory = false
   let isCreatingProject = false
+  let isDeletingProjectID = null
+  let projectListError = ''
   let visibleImageCount = 20
   let jsonByImageID = {}
   let openJsonImageID = null
@@ -745,6 +748,28 @@
     await loadProjectImages(selectedProject.ID)
   }
 
+  async function deleteProject(selectedProject) {
+    const hasUnsavedReport = project?.ID === selectedProject.ID && projectView === 'report' && reportIsDirty
+    const warning = hasUnsavedReport
+      ? `Delete "${selectedProject.Name}" and discard its unsaved report changes? This removes the project, reviews, and report data from the app. Original photo files will not be deleted.`
+      : `Delete "${selectedProject.Name}"? This removes the project, reviews, and report data from the app. Original photo files will not be deleted.`
+    if (!window.confirm(warning)) return
+
+    isDeletingProjectID = selectedProject.ID
+    projectListError = ''
+    try {
+      await DeleteProject(selectedProject.ID)
+      if (project?.ID === selectedProject.ID) {
+        resetSelectedProject()
+      }
+      await getProjects()
+    } catch (error) {
+      projectListError = errorText(error)
+    } finally {
+      isDeletingProjectID = null
+    }
+  }
+
   async function analyzeProject() {
     isAnalyzing = true
     analysisError = ''
@@ -759,8 +784,7 @@
     }
   }
 
-  function clearProject(){
-    if (projectView === 'report' && !canLeaveReport()) return
+  function resetSelectedProject() {
     project = null
     projectView = 'photos'
     resetReportState()
@@ -777,6 +801,11 @@
     reviewErrorImageID = null
     reviewError = ''
   }
+
+  function clearProject(){
+    if (projectView === 'report' && !canLeaveReport()) return
+    resetSelectedProject()
+  }
 </script>
 <svelte:window on:mousemove={movePointer} on:mouseup={endPointer} />
 <div class="app-shell h-screen grid grid-cols-[22%_78%] bg-[#4B5563] text-white">
@@ -792,13 +821,26 @@
       </h2>
       <!-- Scrollable project cards -->
       <div class="flex-1 overflow-y-auto space-y-3 pr-1">
-        {#each projects as project}
-          <button on:click={() => selectProject(project)} class="w-full text-left p-3 rounded-lg bg-[#1f2937] hover:bg[#374151]">
-            <p class="font-semibold">{project.Name}</p>
-            <p class="text-sm text-gray-500">{project.ImageCount} images</p>
-          </button>
+        {#each projects as savedProject}
+          <div class="project-list-item" class:selected={project?.ID === savedProject.ID}>
+            <button class="project-select" on:click={() => selectProject(savedProject)}>
+              <p class="font-semibold">{savedProject.Name}</p>
+              <p class="text-sm text-gray-500">{savedProject.ImageCount} images</p>
+            </button>
+            <button
+                    class="project-delete"
+                    type="button"
+                    title={`Delete ${savedProject.Name}`}
+                    aria-label={`Delete ${savedProject.Name}`}
+                    disabled={isDeletingProjectID === savedProject.ID}
+                    on:click={() => deleteProject(savedProject)}
+            >
+              {isDeletingProjectID === savedProject.ID ? '...' : 'Delete'}
+            </button>
+          </div>
         {/each}
       </div>
+      {#if projectListError}<p class="project-list-error">{projectListError}</p>{/if}
     </div>
   </aside>
   <!-- main part of the dashboard -->
@@ -1976,6 +2018,56 @@
   aside {
     overflow-y: auto;
     min-height: 0;
+  }
+
+  .project-list-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #1f2937;
+  }
+
+  .project-list-item:hover,
+  .project-list-item.selected {
+    border-color: #64748b;
+    background: #273449;
+  }
+
+  .project-select {
+    min-width: 0;
+    padding: 12px;
+    background: transparent;
+    text-align: left;
+  }
+
+  .project-delete {
+    align-self: stretch;
+    border-left: 1px solid #334155;
+    padding: 0 10px;
+    background: transparent;
+    color: #fca5a5;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .project-delete:hover:not(:disabled) {
+    background: #7f1d1d;
+    color: white;
+  }
+
+  .project-delete:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+
+  .project-list-error {
+    margin-top: 12px;
+    color: #fecaca;
+    font-size: 0.8rem;
+    line-height: 1.4;
   }
 
   main {
