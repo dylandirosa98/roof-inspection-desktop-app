@@ -61,4 +61,12 @@ func TestDeleteProjectCascadesWithoutDeletingSourcePhotos(t *testing.T) {
 	if _, err := os.Stat(photoPath); err != nil {
 		t.Fatalf("source photo was removed: %v", err)
 	}
+
+	projects := (&App{ctx: ctx, queries: queries}).GetProjects()
+	if projects == nil {
+		t.Fatal("GetProjects returned nil after deleting the final project")
+	}
+	if len(projects) != 0 {
+		t.Fatalf("GetProjects returned %d projects, want 0", len(projects))
+	}
 }

@@ -127,8 +127,8 @@ func (a *App) RetrieveProject(id int64) ([]database.RetrieveImagesRow, error) {
 
 func (a *App) GetProjects() []database.RetrieveProjectsRow {
 	projects, err := a.queries.RetrieveProjects(a.ctx)
-	if err != nil {
-		return nil
+	if err != nil || projects == nil {
+		return []database.RetrieveProjectsRow{}
 	}
 	return projects
 }
@@ -221,14 +221,8 @@ func (a *App) OpenLastGeneratedInspectionReport(reportID int64) error {
 }
 
 func (a *App) PickDirectory() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
 	selected, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:                "Select Folder of Roof Photos",
-		DefaultDirectory:     home,
-		CanCreateDirectories: false,
+		Title: "Select Project Directory",
 	})
 	if err != nil {
 		return "", err

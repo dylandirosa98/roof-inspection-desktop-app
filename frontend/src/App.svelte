@@ -25,7 +25,6 @@
   let isAnalyzing = false
   let analysisError = ''
   let projectError = ''
-  let isChoosingDirectory = false
   let isCreatingProject = false
   let isDeletingProjectID = null
   let projectListError = ''
@@ -519,17 +518,9 @@
   }
 
   async function chooseDirectory() {
-    isChoosingDirectory = true
-    projectError = ''
-    try {
-      const selected = await PickDirectory()
-      if (selected) {
-        directory = selected
-      }
-    } catch (error) {
-      projectError = errorText(error)
-    } finally {
-      isChoosingDirectory = false
+    const selected = await PickDirectory()
+    if (selected) {
+      directory = selected
     }
   }
   async function getProjects() {
@@ -913,9 +904,7 @@
                     type="text"
                     readonly
               />
-              <button class="btn" on:click={chooseDirectory} disabled={isChoosingDirectory}>
-                {isChoosingDirectory ? 'Opening...' : 'Choose Folder'}
-              </button>
+              <button class="btn" on:click={chooseDirectory}>Choose Folder</button>
             </div>
           </div>
 
