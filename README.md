@@ -2,6 +2,8 @@
 
 Offline-first, inspector-facing desktop software for reviewing roof photos, validating local hail-damage detections, and generating claim-support PDF reports. It is designed for inspection environments where reliable internet access is not guaranteed.
 
+**Stack:** Go backend (ONNX Runtime inference, image preprocessing, SQLite via sqlc, PDF generation), Wails desktop shell, Svelte frontend. Ships as a self-contained Windows installer.
+
 ## Product Demo
 
 [![Spartan Roof Inspection demo showing a generated photo documentation report](docs/roof-inspection-demo.png)](https://github.com/dylandirosa98/roof-inspection-desktop-app/releases/download/v0.1.1/Spartan-Roof-Inspection-Demo.mp4)
